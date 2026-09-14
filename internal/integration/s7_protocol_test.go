@@ -15,31 +15,30 @@ func TestS7Protocol_SessionFramework(t *testing.T) {
 
 	se := core.NewScanEngine(core.ScanEngineConfig{
 		TickInterval: 5 * time.Millisecond,
-		JitterBound:  50 * time.Millisecond,
 	})
 	se.RegisterProtocol("s7", core.ProtocolTypeLimited)
 
 	// Framework mirrors modbus_protocol_test.go:
 	// - shared connection manager session lock
-	// - subscription/read jitter under ScanEngine EDF
+	// - subscription/read pacing under interval scheduler
 	// Wire PLCSIM or hardware when available.
 
 	_ = se
 	t.Log("S7 session framework ready; connect snap7/plcsim to enable full soak")
 }
 
-func TestS7Protocol_EDFDeadlineInitialized(t *testing.T) {
-	se := core.NewScanEngine(core.ScanEngineConfig{JitterBound: 30 * time.Millisecond})
+func TestS7Protocol_TaskScheduled(t *testing.T) {
+	se := core.NewScanEngine(core.ScanEngineConfig{})
 	task := se.AddTask("s7-plc-1", "s7", 200*time.Millisecond, 5, []string{"db1.w0"}, nil)
 
 	got := se.GetTask(task.ID)
 	if got == nil {
 		t.Fatal("task not found")
 	}
-	if got.DeadlineAt.IsZero() {
-		t.Fatal("expected non-zero DeadlineAt for S7 task")
+	if got.NextRun.IsZero() {
+		t.Fatal("expected a scheduled NextRun for S7 task")
 	}
-	if !got.DeadlineAt.After(got.NextRun) {
-		t.Fatalf("DeadlineAt %v must be after NextRun %v", got.DeadlineAt, got.NextRun)
+	if got.Interval != 200*time.Millisecond {
+		t.Fatalf("interval = %v, want 200ms", got.Interval)
 	}
 }

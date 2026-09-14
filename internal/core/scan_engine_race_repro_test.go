@@ -31,16 +31,16 @@ func (m *raceFailingDriver) GetConnectionMetrics() (connectionSeconds int64, rec
 	return 0, 0, "", "", time.Time{}
 }
 
-// TestRaceScanEngineTaskFieldsHotPath 并发运行调度循环 + worker 执行 + 反馈聚合，
-// 由 -race 检测 ScanTask 字段（NextRun/Priority/Interval/DeadlineAt）的锁混用竞态。
+// TestRaceScanEngineTaskFieldsHotPath 并发运行调度循环 + worker 执行，
+// 由 -race 检测 ScanTask 字段（NextRun/Interval/Status/Priority）的锁混用竞态。
 // 运行方式: go test -race -run TestRaceScanEngineTaskFieldsHotPath ./internal/core/
 func TestRaceScanEngineTaskFieldsHotPath(t *testing.T) {
 	se := NewScanEngine(ScanEngineConfig{
-		TickInterval:      5 * time.Millisecond,
-		WorkerCount:       4,
-		MaxQueueSize:      10000,
-		AntiStarvationSec: 1, // 快速触发 enforceAntiStarvation 扫描 se.tasks
-		JitterBound:       20 * time.Millisecond,
+		TickInterval:    5 * time.Millisecond,
+		WorkerCount:     4,
+		MaxQueueSize:    10000,
+		GoroutineLimit:  256,
+		ConnectionLimit: 64,
 	})
 
 	se.RegisterProtocol("modbus-fail", ProtocolTypeParallel)
@@ -52,7 +52,7 @@ func TestRaceScanEngineTaskFieldsHotPath(t *testing.T) {
 	}
 
 	se.Run()
-	// 3s 覆盖多个 feedback 窗口（默认 2s）+ 多次反饿死扫描。
+	// 持续失败触发冷却降级与自愈重排，覆盖调度循环与 worker 的并发读写。
 	time.Sleep(3 * time.Second)
 	se.Stop()
 }

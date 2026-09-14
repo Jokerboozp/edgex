@@ -18,6 +18,10 @@
             <template #icon><IconPlus /></template>
             批量创建寄存器
           </a-button>
+          <a-button v-if="channelProtocol && channelProtocol.includes('modbus')" type="outline" status="success" size="small" @click="openImportDialog">
+            <template #icon><IconUpload /></template>
+            导入点位
+          </a-button>
           <a-button type="outline" status="success" size="small" @click="openAddDialog">
             <template #icon><IconPlus /></template>
             新增点位
@@ -26,7 +30,7 @@
             <template #icon><IconScan /></template>
             扫描点位
           </a-button>
-          <a-button type="primary" size="small" @click="fetchPoints" :loading="loading">
+          <a-button type="primary" size="small" @click="handleRefreshPoints" :loading="refreshLoading">
             <template #icon><IconRefresh /></template>
             刷新
           </a-button>
@@ -423,38 +427,26 @@
             <div class="modal-section__title modal-section__title--sub">高级设置</div>
             <div class="advanced-block point-advanced-block">
               <div class="point-advanced-fields">
-                <div class="form-field">
-                  <div class="field-label">数据格式（格式预设）</div>
-                  <div class="field-hint" title="常用组合一键填充字节数 / 解析类型 / 数据类型 / 字序，新手建议先选预设">常用组合一键填充字节数 / 解析类型 / 数据类型 / 字序，新手建议先选预设</div>
-                  <a-select
-                    v-model="formatPresetSelected"
-                    :options="filteredFormatPresets"
-                    clearable
-                    @update:value="onSelectFormatPreset"
-                  />
-                </div>
-                <div class="batch-form-row">
+                <div class="batch-form-row" style="width:100%">
                   <div class="form-field">
-                    <div class="field-label">解析类型（字节解析）</div>
-                    <div class="field-hint" title="原始字节如何被解读为数值；缩放后可以得到小数">原始字节如何被解读为数值；缩放后可以得到小数</div>
+                    <div class="field-label">数据格式（格式预设）</div>
+                    <div class="field-hint" title="参考 Modbus Poll：一个格式预设即确定字节解析（字节数 / 解析类型 / 字序），新手直接选预设即可">一个格式预设即可解析，新手直接选预设</div>
                     <a-select
-                      v-model="pointDialog.parseType"
-                      :options="filteredParseTypes"
-                      @update:value="onParseTypeChange"
+                      v-model="formatPresetSelected"
+                      :options="filteredFormatPresets"
+                      clearable
+                      @update:value="onSelectFormatPreset"
                     />
                   </div>
                   <div class="form-field">
                     <div class="field-label">数据类型（显示 / 存储 / 北向）</div>
-                    <div class="field-hint" title="缩放后的显示、存储和北向输出类型，可以与原始解析类型不同">缩放后的显示、存储和北向输出类型，可以与原始解析类型不同</div>
+                    <div class="field-hint" title="字节解析由格式预设决定；这里仅指定展示/存储/北向类型，可与解析类型不同（如 int16 解析、float32 展示）">仅按数据类型展示工程值，缩放后可得小数</div>
                     <a-select
                       v-model="pointDialog.form.datatype"
                       :options="datatypeOptions"
                       @update:value="onDatatypeChange"
                     />
                   </div>
-                </div>
-                <div v-if="parseTypeWarnings.length" class="field-warn-list">
-                  <div v-for="w in parseTypeWarnings" :key="w" class="field-warn">{{ w }}</div>
                 </div>
                 <div class="batch-form-row">
                   <div class="form-field">
@@ -546,8 +538,8 @@
             <div class="modal-section__title modal-section__title--sub">数据解析</div>
             <div class="advanced-block point-advanced-block">
               <a-row :gutter="[24, 16]" class="field-grid">
-                <a-col :span="24">
-                  <a-form-item field="formatPreset" label="数据格式（格式预设）">
+                <a-col :span="12">
+                  <a-form-item field="formatPreset" label="数据格式（格式预设）" help="参考 Modbus Poll：一个格式预设即确定字节解析（字节数 / 解析类型 / 字序），新手直接选预设即可">
                     <a-select
                       v-model="formatPresetSelected"
                       :options="filteredFormatPresets"
@@ -556,45 +548,14 @@
                     ></a-select>
                   </a-form-item>
                 </a-col>
-                <a-col :span="8">
-                  <a-form-item field="byteLength" label="字节数">
-                    <a-select
-                      v-model="pointDialog.byteLength"
-                      :options="[1, 2, 4, 8]"
-                    ></a-select>
-                  </a-form-item>
-                </a-col>
-                <a-col :span="8">
-                  <a-form-item field="wordOrderOption" label="WordOrder(字序)">
-                    <a-select
-                      v-model="pointDialog.wordOrderOption"
-                      :options="wordOrderOptionsForBytes"
-                      :disabled="pointDialog.byteLength === 1"
-                    ></a-select>
-                  </a-form-item>
-                </a-col>
-                <a-col :span="8">
-                  <a-form-item field="parseType" label="解析类型（字节解析）">
-                    <a-select
-                      v-model="pointDialog.parseType"
-                      :options="filteredParseTypes"
-                      @update:value="onParseTypeChange"
-                    ></a-select>
-                  </a-form-item>
-                </a-col>
                 <a-col :span="12">
-                  <a-form-item field="datatype" label="数据类型（显示 / 存储 / 北向）">
+                  <a-form-item field="datatype" label="数据类型（显示 / 存储 / 北向）" help="仅按数据类型展示工程值，缩放后可得小数">
                     <a-select
                       v-model="pointDialog.form.datatype"
                       :options="datatypeOptions"
                       @update:value="onDatatypeChange"
                     ></a-select>
                   </a-form-item>
-                </a-col>
-                <a-col v-if="parseTypeWarnings.length" :span="24">
-                  <div class="field-warn-list">
-                    <div v-for="w in parseTypeWarnings" :key="w" class="field-warn">{{ w }}</div>
-                  </div>
                 </a-col>
                 <a-col :span="12">
                   <a-form-item field="read_formula_template" label="读公式模板">
@@ -953,6 +914,121 @@
       </a-form>
     </a-modal>
 
+    <!-- 导入点位（表格）Dialog -->
+    <a-modal
+      v-model:visible="importDialog.visible"
+      title="导入点位（表格）"
+      :width="880"
+      modal-class="channel-config-modal channel-config-modal--batch"
+      :ok-loading="importDialog.loading"
+      ok-text="开始导入"
+      @ok="submitImport"
+      @cancel="importDialog.visible = false"
+    >
+      <p class="modal-intro modal-intro--compact">
+        先选格式预设（自动帮忙填好解析/显示类型），再按行粘贴或导入表格。每行：点位名称, PDU 地址[, 单位][, 数据类型]。解析类型按预设、显示(数据类型)按 float32 实测最顺手。
+      </p>
+      <a-form layout="vertical" class="channel-config-form batch-modbus-form form-controls-md">
+        <div class="batch-form-fields">
+          <div class="batch-form-row">
+            <div class="form-field">
+              <div class="field-label">数据格式（格式预设）</div>
+              <div class="field-hint" title="一键填充解析类型 + 默认数据类型 + 字序">一键填充 解析类型 / 数据类型 / 字序</div>
+              <a-select
+                v-model="importDialog.presetId"
+                :options="filteredFormatPresets"
+                clearable
+                @update:value="onImportPresetChange"
+              />
+            </div>
+            <div class="form-field">
+              <div class="field-label">数据类型（批量默认 / 显示·存储·北向）</div>
+              <div class="field-hint" title="作为各行的展示类型；行内可单独覆盖，预设 int16 时可选 float32 显示小数">预设一般 int16 解析，展示可切 float32 得小数</div>
+              <a-select
+                v-model="importDialog.datatype"
+                :options="datatypeOptions"
+              />
+            </div>
+          </div>
+
+          <div class="batch-form-row">
+            <div class="form-field">
+              <div class="field-label">寄存器类型</div>
+              <a-select
+                v-model="importDialog.register_type"
+                :options="registerBlockRegisterTypes"
+                @change="onImportRegisterTypeChange"
+              />
+            </div>
+            <div class="form-field">
+              <div class="field-label">功能码</div>
+              <a-input-number v-model="importDialog.function_code" :min="1" :max="255" />
+            </div>
+          </div>
+
+          <div class="batch-form-row import-gen-control-row">
+            <div class="form-field">
+              <div class="field-label">连续生成（Excel 下拉补位）</div>
+              <a-input v-model="importDialog.genPrefix" placeholder="名称前缀，如 TEMP" class="import-gen-prefix" />
+              <a-input-number v-model="importDialog.genStart" :min="0" :max="65535" placeholder="起始地址" class="import-gen-num" />
+              <a-input-number v-model="importDialog.genCount" :min="1" :max="2000" placeholder="数量" class="import-gen-num" />
+              <a-button type="outline" size="small" @click="appendGeneratedRows">添加连续点</a-button>
+              <div class="field-hint">按 起始地址+数量 批量补位，名称自动加序号 TEMP_0、TEMP_1…</div>
+            </div>
+          </div>
+
+          <div class="form-field">
+            <div class="field-label">粘贴或导入表格（CSV/TXT/TSV）</div>
+            <a-textarea
+              v-model="importDialog.rawText"
+              :auto-size="{ minRows: 3, maxRows: 8 }"
+              placeholder="每行：点位名称, 地址[, 单位][, 数据类型]&#10;示例：&#10;电压U, 100, V, float32&#10;电流I, 101, A, float32"
+            />
+            <div class="import-file-row">
+              <a-button type="outline" size="small" @click="triggerImportFile">选择 CSV/TXT 文件</a-button>
+              <input ref="importFileRef" type="file" accept=".csv,.txt,.tsv" style="display:none" @change="onImportFileChange" />
+              <a-button type="outline" size="small" @click="parseImportText">解析粘贴内容</a-button>
+              <a-button type="text" size="small" @click="clearImportRows">清空列表</a-button>
+            </div>
+          </div>
+
+          <div class="batch-preview-block">
+            <div class="field-label batch-preview-block__label import-preview-label">
+              待导入预览&nbsp;<span v-if="importDialog.rows.length" class="import-preview-stat">共 {{ importDialog.rows.length }} 行，
+                有效 <span class="import-preview-stat--ok">{{ importPrimaryStats.ok }}</span>，
+                错误 <span class="import-preview-stat--bad">{{ importPrimaryStats.bad }}</span></span>
+            </div>
+            <a-table
+              v-if="importDialog.rows.length"
+              :data="importDialog.rows"
+              :columns="importPreviewColumns"
+              :pagination="false"
+              :scroll="{ y: 240 }"
+              size="small"
+              class="import-preview-table"
+            >
+              <template #name="{ record }"><a-input v-model="record.name" size="small" /></template>
+              <template #address="{ record }">
+                <a-input-number v-model="record.address" size="small" :min="0" :max="65535" class="import-cell-addr" />
+              </template>
+              <template #datatype="{ record }">
+                <a-select v-model="record.datatype" :options="datatypeOptions" size="small" allow-clear class="import-cell-dt" />
+              </template>
+              <template #unit="{ record }"><a-input v-model="record.unit" size="small" /></template>
+              <template #status="{ record }">
+                <span v-if="record.error" class="import-status import-status--bad">{{ record.error }}</span>
+                <span v-else class="import-status import-status--ok">就绪</span>
+              </template>
+              <template #action="{ index }">
+                <a-button type="text" size="mini" status="danger" @click="removeImportRow(index)">删</a-button>
+              </template>
+            </a-table>
+            <a-empty v-else description="暂无待导入点位" />
+          </div>
+        </div>
+      </a-form>
+    </a-modal>
+
     <!-- Delete Confirmation Dialog -->
     <a-modal v-model:visible="deleteDialog.visible" width="400px" @ok="executeDelete" @cancel="deleteDialog.visible = false">
       <template #title>
@@ -1271,7 +1347,7 @@ import {
   IconArrowLeft, IconSearch, IconPlus, IconDelete, IconRefresh,
   IconEdit, IconFile, IconBug, IconCheckCircle, IconClockCircle,
   IconCloseCircle, IconScan, IconCopy, IconClose, IconThunderbolt,
-  IconTag, IconFolder, IconSend, IconQuestionCircle,
+  IconTag, IconFolder, IconSend, IconQuestionCircle, IconUpload,
 } from '@arco-design/web-vue/es/icon'
 import { Message } from '@arco-design/web-vue'
 import HelpDrawer from '../components/HelpDrawer.vue'
@@ -1289,7 +1365,6 @@ import {
     baseWordOrderOptions,
     baseParseTypeOptions,
     getWordOrderOptionsForBytes,
-    filterParseTypesByBytes,
     wordOrderToBackend,
     reorderBytes,
     parseByType,
@@ -1948,51 +2023,6 @@ const recentFormatIds = ref([])
 const wordOrderOptions = baseWordOrderOptions
 const parseTypeOptions = baseParseTypeOptions
 
-const wordOrderOptionsForBytes = computed(() => getWordOrderOptionsForBytes(pointDialog.byteLength))
-
-const filteredParseTypes = computed(() => filterParseTypesByBytes(pointDialog.byteLength))
-
-// parseType 隐含的落库类型（_SWAP 只换字节序、不换类型）
-const parseTypeToDatatype = {
-    BIT: 'bool',
-    UINT8: 'uint8',
-    INT8: 'int8',
-    BCD8: 'uint8',
-    UINT16: 'uint16',
-    UINT16_SWAP: 'uint16',
-    INT16: 'int16',
-    INT16_SWAP: 'int16',
-    BCD16: 'uint16',
-    FLOAT16: 'float32',
-    UINT32: 'uint32',
-    UINT32_SWAP: 'uint32',
-    INT32: 'int32',
-    INT32_SWAP: 'int32',
-    FLOAT32: 'float32',
-    FLOAT32_SWAP: 'float32',
-    BCD32: 'uint32',
-    UINT64: 'uint64',
-    INT64: 'int64',
-    FLOAT64: 'float64',
-    FLOAT64_SWAP: 'float64',
-    STRING: 'string'
-}
-
-// 解析类型决定原始字节宽度，数据类型决定缩放后的输出类型。
-const parseTypeWarnings = computed(() => {
-    const warnings = []
-    const pt = pointDialog.parseType
-    if (!pt) return warnings
-
-    // 1) 解析类型要求的字节数 vs 当前字节数
-    const ptOpt = baseParseTypeOptions.find(o => o.value === pt)
-    if (ptOpt && ptOpt.bytes > 0 && ptOpt.bytes !== pointDialog.byteLength) {
-        warnings.push(`解析类型 ${pt} 需要 ${ptOpt.bytes} 字节，当前字节数为 ${pointDialog.byteLength}——后端按 ${pointDialog.byteLength} 字节读取，数值可能错乱（如浮点读成 0）`)
-    }
-
-    return warnings
-})
-
 // Arco a-select 的 options 要求 {label, value}；formatPresets 只有 id/label，
 // 缺 value 会导致选中值恒为 undefined（点不中、回显空白、转换不触发），这里补上。
 const filteredFormatPresets = computed(() =>
@@ -2276,17 +2306,6 @@ const datatypeToParseType = (dt) => {
   const parseTypeOption = (parseType) =>
     baseParseTypeOptions.find(option => option.value === parseType)
 
-  const onParseTypeChange = (parseType) => {
-    const option = parseTypeOption(parseType)
-    if (!option) return
-
-    pointDialog.byteLength = option.bytes
-    const datatype = parseTypeToDatatype[parseType]
-    if (datatype) pointDialog.form.datatype = datatype
-    pointDialog.form.parse_type = parseType
-    formatPresetSelected.value = null
-  }
-
   const onDatatypeChange = (datatype) => {
     if (!datatype) return
     pointDialog.form.datatype = datatype
@@ -2365,18 +2384,23 @@ const inferPresetFromPoint = (p) => {
 
 const onSelectFormatPreset = (id) => {
     if (!id) {
+        formatPresetSelected.value = null
         return
     }
     const preset = formatPresets.find(p => p.id === id)
     if (!preset) {
         return
     }
+    // 格式预设一键填充：字节数/解析类型/数据类型/字序 → 严格按照顺序写，
+    // 保证 filteredParseTypes 下次计算时，byteLength 已经与预设匹配（解决"Signed 却显示 FLOAT32"）
     pointDialog.byteLength = preset.bytes
     pointDialog.wordOrderOption = preset.wordOrder
     pointDialog.parseType = preset.parseType
     pointDialog.form.datatype = preset.datatype
     pointDialog.form.parse_type = preset.parseType
     pointDialog.form.format = presetIdToFormat(id)
+    // 若用户选完预设后改了数据类型（比如预设 Signed int16 → 用户改成 float32 显示），
+    // 解析类型仍由预设原始字节数决定，缩放后可以得到小数。新手只需要选预设就能做正确配置。
     updateRecentFormats(id)
 }
 
@@ -2858,6 +2882,248 @@ const submitRegisterBlock = async () => {
     }
 }
 
+// ===== 导入点位（表格）：格式预设驱动解析类型，逐行走单点创建接口 =====
+const importFileRef = ref(null)
+
+const importDialog = reactive({
+    visible: false,
+    loading: false,
+    presetId: null,
+    parseType: '',
+    wordOrder: '',
+    format: '',
+    datatype: 'float32',
+    register_type: 'holding',
+    function_code: 3,
+    genPrefix: '',
+    genStart: 0,
+    genCount: 100,
+    rawText: '',
+    rows: []
+})
+
+const importPrimaryStats = computed(() => {
+    const total = importDialog.rows.length
+    const ok = importDialog.rows.filter(r => !r.error).length
+    return { total, ok, bad: total - ok }
+})
+
+// 数据类型(显示/存储/北向) → 原始字节解析类型；解析类型用于后端 RawDataType。
+const parseTypeForImport = (datatype) => {
+    const dt = datatypeToParseType(datatype)
+    if (dt) return dt
+    const fallback = { word: 'UINT16', dword: 'UINT32', lword: 'UINT64' }
+    return fallback[(datatype || '').toLowerCase()] || 'UINT16'
+}
+
+const applyImportPreset = (id) => {
+    const preset = formatPresets.find(p => p.id === id)
+    if (!preset) return
+    importDialog.parseType = preset.parseType
+    importDialog.wordOrder = preset.wordOrder
+    importDialog.format = presetIdToFormat(id)
+    importDialog.datatype = preset.datatype
+}
+
+const onImportPresetChange = (id) => {
+    if (!id) {
+        importDialog.presetId = null
+        importDialog.parseType = ''
+        importDialog.wordOrder = ''
+        importDialog.format = ''
+        return
+    }
+    applyImportPreset(id)
+}
+
+const onImportRegisterTypeChange = (type) => {
+    importDialog.function_code = registerBlockFunctionCodeMap[type] || 3
+}
+
+const pushImportRows = (rows) => {
+    for (const r of rows) {
+        if (r == null) continue
+        const a = Number(r.address)
+        if (!Number.isFinite(a) || (r.address !== 0 && !r.address)) {
+            importDialog.rows.push({
+                name: (r.name || '').trim(),
+                address: a,
+                datatype: (r.datatype || '').trim(),
+                unit: (r.unit || '').trim(),
+                error: `地址 ${r.address} 非法（应为 0-65535）`,
+                status: 'error'
+            })
+            continue
+        }
+        importDialog.rows.push({
+            name: (r.name || '').trim(),
+            address: a,
+            datatype: (r.datatype || '').trim(),
+            unit: (r.unit || '').trim(),
+            error: '',
+            status: 'pending'
+        })
+    }
+    validateImportRows()
+}
+
+// 校验：地址范围 / 与现有点位冲突 / 列表内重复
+const validateImportRows = () => {
+    const seen = new Set()
+    for (const row of importDialog.rows) {
+        row.error = ''
+        const a = row.address
+        if (!Number.isInteger(a) || a < 0 || a > 65535) {
+            row.error = `地址 ${a} 非法（0-65535）`
+            row.status = 'error'
+            continue
+        }
+        if (existingAddresses.value.has(String(a))) {
+            row.error = `地址 ${a} 已存在`
+            row.status = 'error'
+            continue
+        }
+        if (seen.has(a)) {
+            row.error = `地址 ${a} 重复`
+            row.status = 'error'
+            continue
+        }
+        seen.add(a)
+        row.status = 'pending'
+    }
+}
+
+const parseImportText = () => {
+    const text = (importDialog.rawText || '').trim()
+    if (!text) {
+        Message.warning('请先粘贴内容或选择文件')
+        return
+    }
+    const rows = []
+    for (const raw of text.split(/\r?\n/)) {
+        const line = raw.replace(/^\s*#.*$/, '').trim()
+        if (!line) continue
+        const cols = line.split(/[,，;\t]+/).map(c => c.trim())
+        if (!cols.length || !cols[0]) continue
+        rows.push({
+            name: cols[0],
+            address: cols[1],
+            unit: cols[2] || '',
+            datatype: cols[3] || ''
+        })
+    }
+    pushImportRows(rows)
+    Message.success(`已添加 ${rows.length} 行到列表`)
+}
+
+const triggerImportFile = () => {
+    importFileRef.value?.click()
+}
+
+const onImportFileChange = (e) => {
+    const file = e?.target?.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = () => {
+        importDialog.rawText = String(reader.result || '')
+        parseImportText()
+    }
+    reader.readAsText(file, 'utf-8')
+    e.target.value = ''
+}
+
+const appendGeneratedRows = () => {
+    const prefix = (importDialog.genPrefix || 'PT').trim()
+    const start = Number(importDialog.genStart) || 0
+    const count = Math.min(Math.max(Number(importDialog.genCount) || 1, 1), 2000)
+    if (start + count - 1 > 65535) {
+        Message.warning('起始地址 + 数量 超出 0-65535 范围')
+        return
+    }
+    const rows = []
+    for (let i = 0; i < count; i++) {
+        rows.push({ name: `${prefix}_${start + i}`, address: start + i, unit: '', datatype: '' })
+    }
+    pushImportRows(rows)
+    Message.success(`已补充 ${count} 个连续点位`)
+}
+
+const removeImportRow = (index) => {
+    if (index >= 0 && index < importDialog.rows.length) importDialog.rows.splice(index, 1)
+}
+
+const clearImportRows = () => {
+    importDialog.rows = []
+    importDialog.rawText = ''
+}
+
+const openImportDialog = () => {
+    importDialog.visible = true
+    importDialog.presetId = null
+    importDialog.parseType = ''
+    importDialog.wordOrder = ''
+    importDialog.format = ''
+    importDialog.datatype = 'float32'
+    importDialog.register_type = 'holding'
+    importDialog.function_code = 3
+    importDialog.genPrefix = ''
+    importDialog.genStart = 0
+    importDialog.genCount = 100
+    importDialog.rawText = ''
+    importDialog.rows = []
+}
+
+// 同步校验（表格内编辑地址/类型后重查状态）
+const importPreviewColumns = [
+    { title: '名称', slotName: 'name', width: 180 },
+    { title: 'PDU 地址', slotName: 'address', width: 120 },
+    { title: '数据类型', slotName: 'datatype', width: 150 },
+    { title: '单位', slotName: 'unit', width: 110 },
+    { title: '状态', slotName: 'status', width: 180 },
+    { title: '操作', slotName: 'action', width: 60 }
+]
+
+const submitImport = async () => {
+    validateImportRows()
+    const okRows = importDialog.rows.filter(r => !r.error)
+    if (!okRows.length) {
+        Message.warning('暂无有效行可导入，请先修正错误')
+        return
+    }
+    importDialog.loading = true
+    try {
+        // 复用后端已有的批量 AddPoints API：POST /.../points 接受 []model.Point 数组，
+        // 后端 s.cm.AddPoints 已处理事务性批量插入，比串行单点快很多。
+        const url = channelDeviceApiPath(channelId.value, deviceId.value, 'points')
+        const batch = okRows.map(row => {
+            const datatype = row.datatype || importDialog.datatype || 'float32'
+            const parseType = importDialog.parseType || parseTypeForImport(datatype)
+            return {
+                name: row.name || `PT_${row.address}`,
+                address: String(row.address),
+                datatype,
+                parse_type: parseType,
+                word_order: wordOrderToBackend(importDialog.wordOrder || 'AB'),
+                format: importDialog.format || presetIdToFormat(inferPresetFromPoint({ datatype, parse_type: parseType }) || ''),
+                register_type: importDialog.register_type,
+                function_code: importDialog.function_code,
+                readwrite: 'R',
+                scale: 1.0,
+                offset: 0.0,
+                unit: row.unit || ''
+            }
+        })
+        await request.post(url, batch)
+        Message.success(`成功批量导入 ${batch.length} 个点位`)
+        importDialog.visible = false
+        await fetchPoints()
+    } catch (e) {
+        Message.error('批量导入失败: ' + (e.message || e))
+    } finally {
+        importDialog.loading = false
+    }
+}
+
 const openAddDialog = () => {
 	pointDialog.isEdit = false
 	pointDialog.form = {
@@ -2927,6 +3193,17 @@ const openAddDialog = () => {
         }
     }
 	
+	// 新增点位默认与编辑一致：未选预设且仍停留在默认解析类型(FLOAT32/4字节)时,
+	// 自动选中匹配的格式预设并同步字节数/解析类型/数据类型/字序,
+	// 避免"预设显示 2 字节却弹出 4 字节解析列表"这类不一致。
+	if (!formatPresetSelected.value && pointDialog.byteLength === 4 && pointDialog.parseType === 'FLOAT32') {
+		const defaultPresetId = inferPresetFromPoint(pointDialog.form)
+		if (defaultPresetId) {
+			formatPresetSelected.value = defaultPresetId
+			onSelectFormatPreset(defaultPresetId)
+		}
+	}
+
 	pointDialog.visible = true
 }
 
@@ -3387,8 +3664,24 @@ const openDiscoverDialog = () => {
     }
 }
 
-const handleRefreshPoints = () => {
-    fetchPoints()
+const refreshLoading = ref(false)
+
+// 刷新 = 手动触发一次设备全点位读取（采集循环立即执行一轮），随后重新拉取最新点位。
+// read-all 与周期采集共用通道串行锁，多次点击也不会与轮询并发 I/O。
+const handleRefreshPoints = async () => {
+    if (refreshLoading.value) {
+        return
+    }
+    refreshLoading.value = true
+    try {
+        const url = channelDeviceApiPath(channelId.value, deviceId.value, 'points', 'read-all')
+        await request.post(url, null, { timeout: 15000, silent: true })
+    } catch (e) {
+        console.warn('手动全量读取失败，改为仅刷新缓存', e.message)
+    } finally {
+        refreshLoading.value = false
+    }
+    await fetchPoints()
 }
 
 // Value Detail Dialog Logic
@@ -4601,5 +4894,57 @@ const normalizeWriteValue = () => {
   line-height: 1.5;
   color: var(--text-primary, #1d2129);
   word-break: break-all;
+}
+
+/* 导入点位（表格） */
+.import-gen-control-row .form-field {
+  width: 100%;
+}
+.import-gen-prefix {
+  width: 180px;
+  margin-right: 8px;
+}
+.import-gen-num {
+  width: 130px;
+  margin-right: 8px;
+}
+.import-file-row {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.import-file-row .field-hint {
+  margin-top: 0;
+}
+.import-preview-label .import-preview-stat {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--text-tertiary, #86909c);
+}
+.import-preview-stat--ok {
+  color: #00b42a;
+  font-weight: 600;
+}
+.import-preview-stat--bad {
+  color: #f53f3f;
+  font-weight: 600;
+}
+.import-preview-table {
+  margin-top: 8px;
+}
+.import-cell-addr {
+  width: 110px;
+}
+.import-cell-dt {
+  width: 130px;
+}
+.import-status--ok {
+  color: #00b42a;
+}
+.import-status--bad {
+  color: #f53f3f;
+  font-size: 12px;
 }
 </style>

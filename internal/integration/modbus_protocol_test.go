@@ -49,7 +49,6 @@ func TestModbusProtocol_ScanEngineRealDriver(t *testing.T) {
 		TickInterval: 5 * time.Millisecond,
 		WorkerCount:  4,
 		MaxQueueSize: 1000,
-		JitterBound:  0,
 	})
 	se.RegisterProtocol("modbus-tcp", core.ProtocolTypeSerial)
 
@@ -145,7 +144,6 @@ func TestModbusProtocol_SerialScanEngineFaultPropagation(t *testing.T) {
 		TickInterval: 5 * time.Millisecond,
 		WorkerCount:  4,
 		MaxQueueSize: 1000,
-		JitterBound:  0,
 	})
 	se.RegisterProtocol("modbus-tcp", core.ProtocolTypeSerial)
 
@@ -223,7 +221,6 @@ func TestModbusProtocol_CBRecoveryCycles(t *testing.T) {
 	se := core.NewScanEngine(core.ScanEngineConfig{
 		TickInterval: 5 * time.Millisecond,
 		MaxQueueSize: 1000,
-		JitterBound:  0,
 	})
 	se.RegisterProtocol("modbus-tcp", core.ProtocolTypeSerial)
 

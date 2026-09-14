@@ -400,26 +400,6 @@ func TestEdgeComputeManager_LoadRulesThreshold(t *testing.T) {
 	}
 }
 
-func TestAdaptiveThrottle_DeviceRTTAndApplyInterval(t *testing.T) {
-	metrics := &ScanEngineMetrics{}
-	at := NewAdaptiveThrottle(metrics)
-	at.Refresh(800, 1000, 0.2, 250)
-	at.UpdateDeviceRTT("dev-th", 100)
-	at.UpdateDeviceRTT("dev-th", 500)
-
-	task := &ScanTask{
-		DeviceKey:    "dev-th",
-		BaseInterval: 100 * time.Millisecond,
-		Interval:     100 * time.Millisecond,
-	}
-	if !at.ApplyInterval(task) {
-		t.Fatal("expected interval adjustment after RTT spike")
-	}
-	if at.DeviceFactor("dev-th") < deviceRTTMinFactor {
-		t.Fatalf("DeviceFactor = %v, want >= %v", at.DeviceFactor("dev-th"), deviceRTTMinFactor)
-	}
-}
-
 func TestExecutionLayer_SerialWorkerReadFunc(t *testing.T) {
 	var wg sync.WaitGroup
 	wg.Add(1)

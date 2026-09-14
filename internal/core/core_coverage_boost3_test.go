@@ -136,8 +136,10 @@ func TestCommunicationManageTemplate_MarkOfflineCallback(t *testing.T) {
 func TestEdgeComputeManager_ExecuteHttpWithoutNorthbound(t *testing.T) {
 	em := NewEdgeComputeManager(nil, nil, nil)
 	err := em.executeHttp(context.Background(), "rule1", model.RuleAction{
-		Type:   "http",
-		Config: map[string]any{"url": "http://127.0.0.1"},
+		Type: "http",
+		// 通过 http_config_id 走 Northbound 引用路径：无北向管理器时必须
+		// 确定性报错，且不依赖端口 80 上是否存在监听服务（避免真实 HTTP 请求）。
+		Config: map[string]any{"http_config_id": "cfg-1"},
 	}, model.Value{}, nil)
 	if err == nil {
 		t.Fatal("expected error without northbound manager")

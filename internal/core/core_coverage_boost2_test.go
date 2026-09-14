@@ -137,8 +137,3 @@ func TestScanEngine_IsRunningAndFindTask(t *testing.T) {
 		t.Fatalf("findTaskLocked = %+v", found)
 	}
 }
-
-func TestScanEngine_LogSLAWarnings(t *testing.T) {
-	se := NewScanEngine(ScanEngineConfig{})
-	se.logSLAWarnings()
-}

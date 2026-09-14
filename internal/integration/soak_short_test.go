@@ -41,12 +41,11 @@ func TestSoak_ScanEngineShortGate(t *testing.T) {
 	)
 
 	se := core.NewScanEngine(core.ScanEngineConfig{
-		TickInterval:      10 * time.Millisecond,
-		WorkerCount:       16,
-		MaxQueueSize:      10000,
-		AntiStarvationSec: 300,
-		GoroutineLimit:    256,
-		ConnectionLimit:   100,
+		TickInterval:    10 * time.Millisecond,
+		WorkerCount:     16,
+		MaxQueueSize:    10000,
+		GoroutineLimit:  256,
+		ConnectionLimit: 100,
 	})
 	se.RegisterProtocol("modbus-tcp", core.ProtocolTypeParallel)
 

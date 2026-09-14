@@ -42,6 +42,7 @@ type ChannelManager struct {
 	protocolRegistry      *ProtocolAdapterRegistry
 	scanEngineAdapter     *ScanEngineAdapter
 	shadowCore            *ShadowCore
+	shadowIngress         *ShadowIngress
 	mu                    sync.RWMutex
 	ctx                   context.Context
 	cancel                context.CancelFunc
@@ -62,12 +63,11 @@ func NewChannelManager(pipeline *DataPipeline, saveFunc func([]model.Channel) er
 	protocolRegistry := NewProtocolAdapterRegistry()
 
 	scanEngine := NewScanEngine(ScanEngineConfig{
-		TickInterval:      10 * time.Millisecond,
-		WorkerCount:       32,
-		MaxQueueSize:      10000,
-		AntiStarvationSec: 300,
-		GoroutineLimit:    2048,
-		ConnectionLimit:   500,
+		TickInterval:    10 * time.Millisecond,
+		WorkerCount:     32,
+		MaxQueueSize:    10000,
+		GoroutineLimit:  2048,
+		ConnectionLimit: 500,
 	})
 	cm := &ChannelManager{
 		channels:             make(map[string]*model.Channel),
@@ -209,6 +209,7 @@ func (cm *ChannelManager) SetShadowIngress(si *ShadowIngress) {
 	}
 	cm.mu.Lock()
 	cm.shadowCore = si.shadowCore
+	cm.shadowIngress = si
 	cm.mu.Unlock()
 	cm.scanEngineAdapter.scanEngine.SetShadowIngress(si)
 }
@@ -257,11 +258,6 @@ func (cm *ChannelManager) GetScanEngineMetricsSnapshot() map[string]any {
 		snap["driver_circuit_reject_total"] = cbSnap["reject_total"]
 		snap["driver_circuit_state"] = cbSnap["devices"]
 		snap["circuit_breaker"] = cbSnap
-	}
-	if gc := se.GetGCMonitor(); gc != nil {
-		for k, v := range gc.Metrics().Snapshot() {
-			snap[k] = v
-		}
 	}
 	snap["sla_warnings"] = se.GetMetrics().SLAWarnings(cb)
 	for k, v := range se.OperationalSnapshot() {
@@ -1543,6 +1539,105 @@ func (cm *ChannelManager) ReadPoint(channelID, deviceID, pointID string) (model.
 	}
 
 	return model.Value{}, fmt.Errorf("point value not returned")
+}
+
+// ReadAllPoints 立即读取指定设备全部点位一次，并把结果写入 shadow 供前端刷新展示。
+// 与周期采集循环共用 withDriverIO 的通道串行锁，因此不会与该设备/共享链路并发 I/O。
+func (cm *ChannelManager) ReadAllPoints(channelID, deviceID string) ([]model.Value, error) {
+	cm.mu.RLock()
+	ch, ok := cm.channels[channelID]
+	d, okDrv := cm.drivers[channelID]
+	cm.mu.RUnlock()
+
+	if !ok || !okDrv {
+		return nil, fmt.Errorf("channel not found")
+	}
+	if !ch.Enable {
+		return nil, fmt.Errorf("channel is disabled")
+	}
+
+	dev := cm.GetDevice(channelID, deviceID)
+	if dev == nil {
+		return nil, fmt.Errorf("device not found")
+	}
+	if !dev.Enable {
+		return nil, fmt.Errorf("device is disabled")
+	}
+	if len(dev.Points) == 0 {
+		return nil, nil
+	}
+
+	points := make([]model.Point, 0, len(dev.Points))
+	for _, p := range dev.Points {
+		np := p
+		np.DeviceID = dev.ID
+		points = append(points, np)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	var results map[string]model.Value
+	err := cm.withDriverIO(channelID, ch.Protocol, func() error {
+		if slaveID, ok := dev.Config["slave_id"]; ok {
+			switch v := slaveID.(type) {
+			case float64:
+				d.SetSlaveID(uint8(v))
+			case int:
+				d.SetSlaveID(uint8(v))
+			}
+		}
+		d.SetDeviceConfig(buildDriverDeviceConfig(ch, dev.Config, map[string]any{
+			"_internal_device_id": dev.ID,
+		}))
+		var readErr error
+		results, readErr = d.ReadPoints(ctx, points)
+		return readErr
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	now := time.Now()
+	out := make([]model.Value, 0, len(points))
+	for _, p := range points {
+		v, found := lookupDrivenPointValue(results, p)
+		if !found {
+			// 未返回的点位标记 Bad（与采集语义一致），避免残留的 Good 旧值误导
+			v = model.Value{PointID: p.ID, Quality: "Bad"}
+		}
+		if v.Quality == "" {
+			v.Quality = "Good"
+		}
+		v.PointID = p.ID
+		v.DeviceID = deviceID
+		v.ChannelID = channelID
+		if v.TS.IsZero() {
+			v.TS = now
+		}
+		out = append(out, v)
+	}
+
+	if cm.shadowIngress != nil {
+		_ = cm.shadowIngress.IngestBatch(out)
+	}
+	return out, nil
+}
+
+// lookupDrivenPointValue 按点位名称、ID 依次查找驱动返回值，单条结果时兜底返回。
+func lookupDrivenPointValue(results map[string]model.Value, p model.Point) (model.Value, bool) {
+	if v, ok := results[p.Name]; ok {
+		return v, true
+	}
+	if v, ok := results[p.ID]; ok {
+		return v, true
+	}
+	if len(results) == 1 {
+		for _, v := range results {
+			return v, true
+		}
+	}
+	return model.Value{}, false
 }
 
 // Shutdown 关闭所有通道

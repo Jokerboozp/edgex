@@ -4,7 +4,6 @@ import (
 	"container/heap"
 	"errors"
 	"fmt"
-	"hash/fnv"
 	"sync"
 	"time"
 
@@ -13,15 +12,14 @@ import (
 	"go.uber.org/zap"
 )
 
+// ScanEngineConfig 采集调度引擎配置。参照 Kepware：仅保留间隔节奏与并发限流，
+// 去除截止期/抖动/防饿死等复杂调度参数，靠冷却降级与自愈保障稳定性。
 type ScanEngineConfig struct {
-	TickInterval      time.Duration
-	WorkerCount       int
-	MaxQueueSize      int
-	AntiStarvationSec int
-	PriorityLevels    int
-	GoroutineLimit    int
-	ConnectionLimit   int
-	JitterBound       time.Duration
+	TickInterval    time.Duration // 调度主循环节拍
+	WorkerCount     int           // 并发采集 worker 数
+	MaxQueueSize    int           // 就绪队列最大长度（超限时资源排队）
+	GoroutineLimit  int           // 协程上限
+	ConnectionLimit int           // 并发连接上限
 }
 
 type ScanTaskStatus int
@@ -57,8 +55,6 @@ type ScanTask struct {
 	BaseInterval        time.Duration
 	NextRun             time.Time
 	LastScheduledAt     time.Time
-	DeadlineAt          time.Time
-	PhaseOffset         time.Duration
 	Priority            int
 	FailRate            float64
 	Status              ScanTaskStatus
@@ -90,6 +86,13 @@ func (t *ScanTask) SetStatus(status ScanTaskStatus) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	t.Status = status
+}
+
+// LastSuccessTime 返回最近一次成功采集时间（并发安全）。
+func (t *ScanTask) LastSuccessTime() time.Time {
+	t.mu.RLock()
+	defer t.mu.RUnlock()
+	return t.LastSuccess
 }
 
 // isQueued reports whether the task is currently in the priority queue.
@@ -135,48 +138,23 @@ func (t *ScanTask) UpdateNextRun(interval time.Duration) {
 	t.NextRun = now.Add(interval)
 }
 
-func taskJitterBound(bound time.Duration) time.Duration {
-	if bound <= 0 {
-		return 50 * time.Millisecond
-	}
-	return bound
-}
-
-func taskDeterministicJitter(taskID string, bound time.Duration) time.Duration {
-	bound = taskJitterBound(bound)
-	if bound <= 0 {
-		return 0
-	}
-	h := fnv.New32a()
-	_, _ = h.Write([]byte(taskID))
-	return time.Duration(h.Sum32() % uint32(bound.Nanoseconds()))
-}
-
 type PriorityQueue []*ScanTask
 
 func (pq PriorityQueue) Len() int { return len(pq) }
 
 func (pq PriorityQueue) Less(i, j int) bool {
 	pq[i].mu.RLock()
-	iNext, iDeadline, iPriority := pq[i].NextRun, pq[i].DeadlineAt, pq[i].Priority
+	iNext, iPriority := pq[i].NextRun, pq[i].Priority
 	pq[i].mu.RUnlock()
 	pq[j].mu.RLock()
-	jNext, jDeadline, jPriority := pq[j].NextRun, pq[j].DeadlineAt, pq[j].Priority
+	jNext, jPriority := pq[j].NextRun, pq[j].Priority
 	pq[j].mu.RUnlock()
+	// 按最早就绪时刻出队（Kepware 式轮询节奏）；tie-break 用优先级保证确定性。
 	if iNext.Before(jNext) {
 		return true
 	}
 	if jNext.Before(iNext) {
 		return false
-	}
-	// EDF tie-break: earliest DeadlineAt among same NextRun.
-	if !iDeadline.IsZero() && !jDeadline.IsZero() {
-		if iDeadline.Before(jDeadline) {
-			return true
-		}
-		if jDeadline.Before(iDeadline) {
-			return false
-		}
 	}
 	return iPriority > jPriority
 }
@@ -207,31 +185,23 @@ func (pq *PriorityQueue) Peek() *ScanTask {
 // CollectFinalizeFunc 采集完成后回写设备通信状态。
 type CollectFinalizeFunc func(deviceID string, result *ExecuteResult)
 
-const antiStarvationWarnInterval = 60 * time.Second
-
 type ScanEngine struct {
-	tasks             map[string]*ScanTask
-	priorityQueue     *PriorityQueue
-	executionLayer    *ExecutionLayer
-	resourceCtrl      *ResourceController
-	shadowCore        *ShadowCore
-	shadowIngress     *ShadowIngress
-	pointDegrade      *PointDegradationManager
-	collectFinalize   CollectFinalizeFunc
-	metrics           *ScanEngineMetrics
-	adaptiveThrottle  *AdaptiveThrottle
-	gcMonitor         *GCMonitor
-	feedbackAgg       *FeedbackAggregator
-	feedbackPending   map[string]*ScanTask
-	feedbackPendingMu sync.Mutex
-	config            ScanEngineConfig
-	ticker            *time.Ticker
-	running           bool
-	stopCh            chan struct{}
-	wg                sync.WaitGroup
-	mu                sync.RWMutex
-	taskIDCounter     int
-	overdueWarnAt     map[string]time.Time
+	tasks           map[string]*ScanTask
+	priorityQueue   *PriorityQueue
+	executionLayer  *ExecutionLayer
+	resourceCtrl    *ResourceController
+	shadowCore      *ShadowCore
+	shadowIngress   *ShadowIngress
+	pointDegrade    *PointDegradationManager
+	collectFinalize CollectFinalizeFunc
+	metrics         *ScanEngineMetrics
+	config          ScanEngineConfig
+	ticker          *time.Ticker
+	running         bool
+	stopCh          chan struct{}
+	wg              sync.WaitGroup
+	mu              sync.RWMutex
+	taskIDCounter   int
 }
 
 func NewScanEngine(config ScanEngineConfig) *ScanEngine {
@@ -244,26 +214,17 @@ func NewScanEngine(config ScanEngineConfig) *ScanEngine {
 	if config.MaxQueueSize == 0 {
 		config.MaxQueueSize = 10000
 	}
-	if config.AntiStarvationSec == 0 {
-		config.AntiStarvationSec = 300
-	}
-	if config.PriorityLevels == 0 {
-		config.PriorityLevels = 10
-	}
 	if config.GoroutineLimit == 0 {
 		config.GoroutineLimit = 2048
 	}
 	if config.ConnectionLimit == 0 {
 		config.ConnectionLimit = 500
 	}
-	config.JitterBound = taskJitterBound(config.JitterBound)
 
 	se := &ScanEngine{
-		tasks:           make(map[string]*ScanTask),
-		feedbackPending: make(map[string]*ScanTask),
-		overdueWarnAt:   make(map[string]time.Time),
-		priorityQueue:   &PriorityQueue{},
-		executionLayer:  NewExecutionLayer(),
+		tasks:          make(map[string]*ScanTask),
+		priorityQueue:  &PriorityQueue{},
+		executionLayer: NewExecutionLayer(),
 		resourceCtrl: NewResourceController(ResourceLimits{
 			GoroutineLimit:  config.GoroutineLimit,
 			ConnectionLimit: config.ConnectionLimit,
@@ -276,16 +237,6 @@ func NewScanEngine(config ScanEngineConfig) *ScanEngine {
 		config: config,
 		stopCh: make(chan struct{}),
 	}
-
-	se.adaptiveThrottle = NewAdaptiveThrottle(se.metrics)
-	se.feedbackAgg = NewFeedbackAggregator(2*time.Second, func(deviceKey string, stats AggregatedStats) {
-		se.applyAggregatedFeedback(deviceKey, stats)
-	})
-	se.gcMonitor = NewGCMonitor(func(pauseMaxMs float64) {
-		if se.executionLayer != nil {
-			se.executionLayer.ReduceBackpressureRate(gcBackpressureRateFactor)
-		}
-	})
 
 	heap.Init(se.priorityQueue)
 
@@ -311,22 +262,10 @@ func (se *ScanEngine) Run() {
 		se.executionLayer.Start()
 	}
 
-	if se.feedbackAgg != nil {
-		se.feedbackAgg.Start()
-	}
-
-	if se.gcMonitor != nil {
-		se.gcMonitor.Start()
-	}
-
-	se.wg.Add(1)
-	go se.slaWarningLoop()
-
 	zap.L().Info("[ScanEngine] 调度引擎已启动",
 		zap.String("tickInterval", se.config.TickInterval.String()),
 		zap.Int("workerCount", se.config.WorkerCount),
 		zap.Int("maxQueueSize", se.config.MaxQueueSize),
-		zap.Int("antiStarvationSec", se.config.AntiStarvationSec),
 		zap.Int("goroutineLimit", se.config.GoroutineLimit),
 		zap.Int("connectionLimit", se.config.ConnectionLimit),
 	)
@@ -347,25 +286,12 @@ func (se *ScanEngine) Stop() {
 		se.ticker.Stop()
 	}
 
-	if se.gcMonitor != nil {
-		se.gcMonitor.Stop()
-	}
-
-	if se.feedbackAgg != nil {
-		se.feedbackAgg.Stop()
-	}
-
 	se.resourceCtrl.Stop()
 	if se.executionLayer != nil {
 		se.executionLayer.Stop()
 	}
 
 	se.wg.Wait()
-
-	// 引擎已停止，丢弃所有未消费的聚合反馈挂起项，避免残留引用。
-	se.feedbackPendingMu.Lock()
-	se.feedbackPending = make(map[string]*ScanTask)
-	se.feedbackPendingMu.Unlock()
 
 	zap.L().Info("[ScanEngine] 调度引擎已停止")
 }
@@ -512,17 +438,8 @@ func (se *ScanEngine) nextReadyTime() time.Time {
 func (se *ScanEngine) processReadyTasks() {
 	now := time.Now()
 
-	if se.adaptiveThrottle != nil {
-		se.adaptiveThrottle.Refresh(
-			se.GetPendingTaskCount(),
-			se.config.MaxQueueSize,
-			se.metrics.GlobalFailRate(),
-			se.metrics.AvgLagMs(),
-		)
-	}
-
 	for {
-		task := se.popReadyTaskEDF(now)
+		task := se.popReadyTask(now)
 		if task == nil {
 			break
 		}
@@ -544,16 +461,10 @@ func (se *ScanEngine) processReadyTasks() {
 		se.resourceCtrl.Acquire()
 		go se.executeTaskAsync(task)
 	}
-
-	// Clamp only tasks still queued after dispatch; avoids counting a miss
-	// for work dispatched in the same tick.
-	se.enforceHardJitterClamp(time.Now())
-
-	se.enforceAntiStarvation(now)
 }
 
-// popReadyTaskEDF removes the ready task with the earliest DeadlineAt (EDF).
-func (se *ScanEngine) popReadyTaskEDF(now time.Time) *ScanTask {
+// popReadyTask 从队列取出就绪（NextRun<=now）且 NextRun 最早的任务。
+func (se *ScanEngine) popReadyTask(now time.Time) *ScanTask {
 	se.mu.Lock()
 	defer se.mu.Unlock()
 
@@ -565,7 +476,7 @@ func (se *ScanEngine) popReadyTaskEDF(now time.Time) *ScanTask {
 	bestIdx := -1
 	for i, task := range *pq {
 		task.mu.RLock()
-		nextRun, deadline, priority := task.NextRun, task.DeadlineAt, task.Priority
+		nextRun, priority := task.NextRun, task.Priority
 		task.mu.RUnlock()
 		if now.Before(nextRun) {
 			continue
@@ -576,12 +487,9 @@ func (se *ScanEngine) popReadyTaskEDF(now time.Time) *ScanTask {
 		}
 		best := (*pq)[bestIdx]
 		best.mu.RLock()
-		bestDeadline := best.DeadlineAt
-		bestPriority := best.Priority
+		bestNext, bestPriority := best.NextRun, best.Priority
 		best.mu.RUnlock()
-		if deadline.Before(bestDeadline) {
-			bestIdx = i
-		} else if deadline.Equal(bestDeadline) && priority > bestPriority {
+		if nextRun.Before(bestNext) || (nextRun.Equal(bestNext) && priority > bestPriority) {
 			bestIdx = i
 		}
 	}
@@ -591,113 +499,6 @@ func (se *ScanEngine) popReadyTaskEDF(now time.Time) *ScanTask {
 	removed := heap.Remove(pq, bestIdx).(*ScanTask)
 	removed.setQueued(false)
 	return removed
-}
-
-// enforceHardJitterClamp forces immediate dispatch when now exceeds DeadlineAt.
-func (se *ScanEngine) enforceHardJitterClamp(now time.Time) {
-	se.mu.Lock()
-	defer se.mu.Unlock()
-
-	pq := se.priorityQueue
-	for i := 0; i < pq.Len(); i++ {
-		task := (*pq)[i]
-		task.mu.RLock()
-		deadline := task.DeadlineAt
-		task.mu.RUnlock()
-		if deadline.IsZero() || !now.After(deadline) {
-			continue
-		}
-		if task.GetStatus() != ScanTaskStatusIdle {
-			continue
-		}
-		se.metrics.RecordMissDeadlineForChannel(taskShadowChannelID(task))
-		task.mu.Lock()
-		se.boostPriorityOnMiss(task)
-		task.NextRun = now
-		task.LastScheduledAt = now
-		task.DeadlineAt = now
-		task.mu.Unlock()
-		heap.Fix(pq, i)
-	}
-}
-
-func (se *ScanEngine) boostPriorityOnMiss(task *ScanTask) {
-	if task == nil {
-		return
-	}
-	boost := task.Priority + 2
-	if boost > se.config.PriorityLevels {
-		boost = se.config.PriorityLevels
-	}
-	if boost < 1 {
-		boost = 1
-	}
-	task.Priority = boost
-}
-
-func (se *ScanEngine) enforceAntiStarvation(now time.Time) {
-	antiStarvationDuration := time.Duration(se.config.AntiStarvationSec) * time.Second
-
-	se.mu.Lock()
-	defer se.mu.Unlock()
-
-	for _, task := range se.tasks {
-		task.mu.Lock()
-		if task.NextRun.IsZero() {
-			task.mu.Unlock()
-			continue
-		}
-		if now.Sub(task.NextRun) <= antiStarvationDuration {
-			task.mu.Unlock()
-			continue
-		}
-
-		se.metrics.RecordOverdue()
-		lastWarn, warned := se.overdueWarnAt[task.ID]
-		if !warned || now.Sub(lastWarn) >= antiStarvationWarnInterval {
-			se.overdueWarnAt[task.ID] = now
-			zap.L().Warn("[防饿死] 任务超过预期执行时间",
-				zap.String("taskID", task.ID),
-				zap.String("deviceKey", task.DeviceKey),
-				zap.Duration("overdue", now.Sub(task.NextRun)),
-			)
-		}
-
-		if task.Status != ScanTaskStatusIdle {
-			task.mu.Unlock()
-			continue
-		}
-
-		se.metrics.RecordStarvationRescue()
-		task.Priority = 10
-		task.LastScheduledAt = now
-		task.NextRun = now
-		task.DeadlineAt = now.Add(taskJitterBound(se.config.JitterBound))
-		alreadyQueued := task.queued
-		task.mu.Unlock()
-
-		// Rescuing must NOT push a duplicate entry for a task that is already
-		// in the heap: two entries sharing one *ScanTask would let two workers
-		// run it concurrently and corrupt task-scoped state (Points/Status).
-		if alreadyQueued {
-			se.heapFixLocked(task)
-		} else {
-			task.setQueued(true)
-			heap.Push(se.priorityQueue, task)
-		}
-	}
-}
-
-// heapFixLocked re-heapifies an existing priority-queue entry in place.
-// Caller must hold se.mu.
-func (se *ScanEngine) heapFixLocked(task *ScanTask) {
-	pq := se.priorityQueue
-	for i := 0; i < pq.Len(); i++ {
-		if (*pq)[i] == task {
-			heap.Fix(pq, i)
-			return
-		}
-	}
 }
 
 func (se *ScanEngine) executeTaskAsync(task *ScanTask) {
@@ -740,33 +541,13 @@ func (se *ScanEngine) executeTaskAsync(task *ScanTask) {
 	if result.Success && se.shadowCore != nil {
 		rttMicros := time.Since(start).Microseconds()
 		se.shadowCore.UpdateDeviceRTT(task.DeviceKey, rttMicros)
-		if se.adaptiveThrottle != nil {
-			se.adaptiveThrottle.UpdateDeviceRTT(task.DeviceKey, float64(rttMicros)/1000.0)
-		}
 	}
 	se.metrics.RecordExecuteForChannel(taskShadowChannelID(task), result != nil && result.Success, lagMicros)
 
 	se.applyCollectToShadow(task, result)
 
-	if result != nil && (result.Success || errors.Is(result.Error, ErrCircuitOpen)) {
-		se.updateTaskState(task, result)
-	} else if se.feedbackAgg != nil {
-		se.feedbackPendingMu.Lock()
-		se.feedbackPending[task.DeviceKey] = task
-		se.feedbackPendingMu.Unlock()
-		var failErr error
-		if result != nil {
-			failErr = result.Error
-		}
-		se.feedbackAgg.Submit(FeedbackEvent{
-			DeviceKey: task.DeviceKey,
-			TaskID:    task.ID,
-			Success:   false,
-			Err:       failErr,
-			At:        time.Now(),
-			LagMicros: lagMicros,
-		})
-	} else {
+	// 所有结果（成功/失败/熔断半开）统一走同步状态更新：成功恢复间隔，失败冷却退避。
+	if result != nil {
 		se.updateTaskState(task, result)
 	}
 
@@ -849,27 +630,20 @@ func (se *ScanEngine) rescheduleTask(task *ScanTask, completedAt time.Time) {
 		anchor = completedAt
 	}
 
-	next := anchor.Add(interval)
-	jitterBound := taskJitterBound(se.config.JitterBound)
-
-	channelID := taskShadowChannelIDLocked(task)
-	for next.Before(completedAt) {
-		if !task.DeadlineAt.IsZero() && completedAt.After(task.DeadlineAt) {
-			se.metrics.RecordMissDeadlineForChannel(channelID)
-			se.boostPriorityOnMiss(task)
-		}
-		drift := completedAt.Sub(next)
-		if drift > 0 {
-			se.metrics.RecordDriftForChannel(channelID, drift.Microseconds())
-		}
-		next = next.Add(interval)
+	// 纯间隔节奏：轮耗时 ≤ 间隔 → 对齐到基准整点（周期≈间隔，不漂移累积）；
+	// 轮耗时 > 间隔 → 完成后立即续跑（周期≈轮耗时），不空等。
+	elapsed := completedAt.Sub(anchor)
+	if elapsed < 0 {
+		elapsed = 0
 	}
-
-	jitter := taskDeterministicJitter(task.ID, jitterBound)
+	hold := interval - elapsed
+	if hold < 0 {
+		hold = 0
+	}
+	next := completedAt.Add(hold)
 
 	task.LastScheduledAt = next
-	task.NextRun = next.Add(jitter)
-	task.DeadlineAt = task.NextRun.Add(jitterBound)
+	task.NextRun = next
 }
 
 func taskCollectPointIDs(task *ScanTask) []string {
@@ -1055,79 +829,6 @@ func (se *ScanEngine) markDeviceShadowBad(deviceKey, channelID string) {
 	})
 }
 
-func (se *ScanEngine) applyAggregatedFeedback(deviceKey string, stats AggregatedStats) {
-	se.feedbackPendingMu.Lock()
-	task := se.feedbackPending[deviceKey]
-	delete(se.feedbackPending, deviceKey)
-	se.feedbackPendingMu.Unlock()
-	// 已停止/已移除的任务跳过状态回写，避免对失效任务做降级或重调度。
-	if task == nil || task.GetStatus() == ScanTaskStatusStopped {
-		return
-	}
-	se.updateTaskStateAggregated(task, stats)
-}
-
-func (se *ScanEngine) updateTaskStateAggregated(task *ScanTask, stats AggregatedStats) {
-	task.mu.Lock()
-
-	if stats.FailCount == 0 {
-		task.ConsecutiveSuccess += stats.SuccessCount
-		task.ConsecutiveFailures = 0
-		task.LastSuccess = time.Now()
-		task.FailRate = 0
-		task.Status = ScanTaskStatusIdle
-		if task.BaseInterval > 0 && task.Interval != task.BaseInterval {
-			task.Interval = task.BaseInterval
-		}
-		if stats.SuccessCount > 0 && task.Priority < 10 {
-			task.Priority++
-		}
-	} else {
-		task.ConsecutiveFailures += stats.FailCount
-		task.ConsecutiveSuccess = 0
-		task.LastFailure = time.Now()
-		task.FailRate = stats.FailRate
-
-		if stats.FailCount >= 3 && se.taskDegradeOnFailureLocked(task) {
-			shift := task.ConsecutiveFailures - 3
-			if shift > 6 {
-				shift = 6
-			}
-			newInterval := task.Interval * (1 << shift)
-			if newInterval > 64*time.Second {
-				newInterval = 64 * time.Second
-			}
-			if task.BaseInterval > 0 && newInterval < task.BaseInterval {
-				newInterval = task.BaseInterval
-			}
-			if newInterval < time.Millisecond {
-				newInterval = time.Millisecond
-			}
-			if newInterval != task.Interval {
-				zap.L().Warn("[降级] 窗口内失败率过高，调整采集间隔",
-					zap.String("taskID", task.ID),
-					zap.String("deviceKey", task.DeviceKey),
-					zap.Int("failCount", stats.FailCount),
-					zap.Float64("failRate", stats.FailRate),
-					zap.Duration("oldInterval", task.Interval),
-					zap.Duration("newInterval", newInterval),
-				)
-				task.Interval = newInterval
-				task.Status = ScanTaskStatusDegraded
-			}
-		}
-		if task.Priority > 1 {
-			task.Priority--
-		}
-	}
-	applyAdaptive := se.adaptiveThrottle != nil
-	task.mu.Unlock()
-
-	if applyAdaptive {
-		se.adaptiveThrottle.ApplyInterval(task)
-	}
-}
-
 func (se *ScanEngine) updateTaskState(task *ScanTask, result *ExecuteResult) {
 	task.mu.Lock()
 
@@ -1137,11 +838,9 @@ func (se *ScanEngine) updateTaskState(task *ScanTask, result *ExecuteResult) {
 		task.LastSuccess = time.Now()
 		task.FailRate = 0
 		task.Status = ScanTaskStatusIdle
+		// 成功：恢复基础间隔（自愈）。
 		if task.BaseInterval > 0 && task.Interval != task.BaseInterval {
 			task.Interval = task.BaseInterval
-		}
-		if task.Priority < 10 {
-			task.Priority++
 		}
 	} else if result != nil && errors.Is(result.Error, ErrCircuitOpen) {
 		// Fast-fail while CB open: keep scan cadence for HalfOpen probes.
@@ -1155,8 +854,9 @@ func (se *ScanEngine) updateTaskState(task *ScanTask, result *ExecuteResult) {
 		task.LastFailure = time.Now()
 		task.FailRate = (task.FailRate*0.8 + 1.0*0.2)
 
+		// 冷却降级：连续失败后按 2^n 递增间隔（第 3 次失败起倍增，封顶 64s）。
 		if task.ConsecutiveFailures >= 3 && se.taskDegradeOnFailureLocked(task) {
-			shift := task.ConsecutiveFailures - 3
+			shift := task.ConsecutiveFailures - 2
 			if shift > 6 {
 				shift = 6
 			}
@@ -1182,16 +882,8 @@ func (se *ScanEngine) updateTaskState(task *ScanTask, result *ExecuteResult) {
 				task.Status = ScanTaskStatusDegraded
 			}
 		}
-		if task.Priority > 1 {
-			task.Priority--
-		}
 	}
-	applyAdaptive := se.adaptiveThrottle != nil
 	task.mu.Unlock()
-
-	if applyAdaptive {
-		se.adaptiveThrottle.ApplyInterval(task)
-	}
 }
 
 // taskDegradeOnFailureLocked assumes the caller already holds task.mu.
@@ -1237,24 +929,7 @@ func (se *ScanEngine) addTask(deviceKey, protocol, scanClass string, interval ti
 	}
 
 	now := time.Now()
-	jitterBound := taskJitterBound(se.config.JitterBound)
-	jitter := taskDeterministicJitter(taskID, jitterBound)
-	phaseOffset := time.Duration(0)
-	if params != nil {
-		switch v := params["phaseOffset"].(type) {
-		case time.Duration:
-			phaseOffset = v
-		case int64:
-			phaseOffset = time.Duration(v)
-		}
-	}
-	if phaseOffset == 0 && interval > 0 {
-		h := fnv.New32a()
-		_, _ = h.Write([]byte(deviceKey))
-		phaseOffset = time.Duration(uint64(h.Sum32()) % uint64(interval.Nanoseconds()))
-	}
-	base := now.Add(phaseOffset)
-	nextRun := base.Add(jitter)
+	base := now
 
 	task := &ScanTask{
 		ID:              taskID,
@@ -1264,9 +939,7 @@ func (se *ScanEngine) addTask(deviceKey, protocol, scanClass string, interval ti
 		Interval:        interval,
 		BaseInterval:    interval,
 		LastScheduledAt: base,
-		NextRun:         nextRun,
-		DeadlineAt:      nextRun.Add(jitterBound),
-		PhaseOffset:     phaseOffset,
+		NextRun:         base,
 		Priority:        priority,
 		FailRate:        0,
 		Status:          ScanTaskStatusIdle,
@@ -1301,27 +974,12 @@ func (se *ScanEngine) RemoveTask(taskID string) {
 	if task, exists := se.tasks[taskID]; exists {
 		task.SetStatus(ScanTaskStatusStopped)
 		delete(se.tasks, taskID)
-		delete(se.overdueWarnAt, taskID)
 		se.removeFromQueueLocked(task)
-		se.dropPendingFeedback(task)
 		zap.L().Info("[ScanEngine] 移除任务",
 			zap.String("taskID", taskID),
 			zap.String("deviceKey", task.DeviceKey),
 		)
 	}
-}
-
-// dropPendingFeedback 清理任务在 feedbackPending 中的挂起项。
-// 仅当该 deviceKey 的挂起项仍指向本任务时才删除，避免误删同设备新增任务的条目。
-func (se *ScanEngine) dropPendingFeedback(task *ScanTask) {
-	if task == nil {
-		return
-	}
-	se.feedbackPendingMu.Lock()
-	if se.feedbackPending[task.DeviceKey] == task {
-		delete(se.feedbackPending, task.DeviceKey)
-	}
-	se.feedbackPendingMu.Unlock()
 }
 
 // removeFromQueueLocked drops a task's entry from the priority queue if present.
@@ -1346,18 +1004,12 @@ func (se *ScanEngine) RemoveTasksByDeviceKey(deviceKey string) {
 		if task.DeviceKey == deviceKey {
 			task.SetStatus(ScanTaskStatusStopped)
 			delete(se.tasks, taskID)
-			delete(se.overdueWarnAt, taskID)
 			zap.L().Info("[ScanEngine] 移除任务",
 				zap.String("taskID", taskID),
 				zap.String("deviceKey", deviceKey),
 			)
 		}
 	}
-
-	// 同步清理该设备的聚合反馈挂起项，防止已移除任务被回写或残留。
-	se.feedbackPendingMu.Lock()
-	delete(se.feedbackPending, deviceKey)
-	se.feedbackPendingMu.Unlock()
 
 	// 同步从优先队列中清除残留任务指针，防止 processReadyTasks 再次弹出执行。
 	pq := se.priorityQueue
@@ -1575,10 +1227,6 @@ func (se *ScanEngine) GetMetrics() *ScanEngineMetrics {
 	return se.metrics
 }
 
-func (se *ScanEngine) GetGCMonitor() *GCMonitor {
-	return se.gcMonitor
-}
-
 func (se *ScanEngine) GetCircuitBreaker() *DriverCircuitBreaker {
 	if se == nil || se.executionLayer == nil {
 		return nil
@@ -1603,50 +1251,6 @@ func (se *ScanEngine) OperationalSnapshot() map[string]any {
 		out["throttle_reject_by_reason"] = bp.RejectByReason()
 	}
 	return out
-}
-
-func (se *ScanEngine) slaWarningLoop() {
-	defer se.wg.Done()
-
-	ticker := time.NewTicker(30 * time.Second)
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-se.stopCh:
-			return
-		case <-ticker.C:
-			se.safeSLAWarnings()
-		}
-	}
-}
-
-// safeSLAWarnings isolates a panic in the SLA reporting path so the
-// observability loop can never die and silently mute warnings.
-func (se *ScanEngine) safeSLAWarnings() {
-	defer func() {
-		if r := recover(); r != nil {
-			zap.L().Error("[ScanEngine] SLA 告警循环 panic 已恢复", zap.Any("panic", r), zap.Stack("stack"))
-		}
-	}()
-	se.logSLAWarnings()
-}
-
-func (se *ScanEngine) logSLAWarnings() {
-	if se.metrics == nil {
-		return
-	}
-	cb := se.GetCircuitBreaker()
-	warnings := se.metrics.SLAWarnings(cb)
-	for _, w := range warnings {
-		zap.L().Warn("[SLA] scan engine threshold exceeded",
-			zap.Any("code", w["code"]),
-			zap.Any("metric", w["metric"]),
-			zap.Any("value", w["value"]),
-			zap.Any("threshold", w["threshold"]),
-			zap.Any("message", w["message"]),
-		)
-	}
 }
 
 func (se *ScanEngine) ExecuteTask(task *ScanTask) *ExecuteResult {

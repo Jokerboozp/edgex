@@ -16,7 +16,6 @@ func TestOpcuaProtocol_SessionFramework(t *testing.T) {
 
 	se := core.NewScanEngine(core.ScanEngineConfig{
 		TickInterval: 5 * time.Millisecond,
-		JitterBound:  50 * time.Millisecond,
 	})
 	se.RegisterProtocol("opc-ua", core.ProtocolTypeParallel)
 
@@ -27,23 +26,21 @@ func TestOpcuaProtocol_SessionFramework(t *testing.T) {
 	// Assert: peer modbus tasks unaffected during opcua session reconnect.
 
 	_ = se
-	t.Log("OPC UA session lock / subscription jitter framework ready; wire live server to enable")
+	t.Log("OPC UA session framework ready; wire live server to enable")
 }
 
-func TestOpcuaProtocol_SubscriptionJitterBound(t *testing.T) {
-	jitterBound := 50 * time.Millisecond
-	se := core.NewScanEngine(core.ScanEngineConfig{JitterBound: jitterBound})
+func TestOpcuaProtocol_TaskInitialized(t *testing.T) {
+	se := core.NewScanEngine(core.ScanEngineConfig{})
 	task := se.AddTask("opcua-mock", "opc-ua", time.Second, 5, []string{"p1"}, nil)
 
 	got := se.GetTask(task.ID)
 	if got == nil {
 		t.Fatal("task not found")
 	}
-	if got.DeadlineAt.IsZero() {
-		t.Fatal("expected non-zero DeadlineAt")
+	if got.NextRun.IsZero() {
+		t.Fatal("expected a scheduled NextRun")
 	}
-	gap := got.DeadlineAt.Sub(got.NextRun)
-	if gap != jitterBound {
-		t.Fatalf("deadline gap = %v, want jitter bound %v", gap, jitterBound)
+	if got.Interval != time.Second {
+		t.Fatalf("interval = %v, want 1s", got.Interval)
 	}
 }

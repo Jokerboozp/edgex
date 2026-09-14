@@ -569,6 +569,7 @@ func (s *Server) setupRoutes() {
 	api.Get("/channels/:channelId/devices/:deviceId/points/export", s.exportDevicePoints)  // Export points
 	api.Post("/channels/:channelId/devices/:deviceId/points/import", s.importDevicePoints) // Import points
 	api.Post("/channels/:channelId/devices/:deviceId/points/generate-registers", s.generateDeviceRegisters)
+	api.Post("/channels/:channelId/devices/:deviceId/points/read-all", s.triggerReadAllPoints) // 手动全量读取
 
 	// 兼容路径：UI 可能会尝试直接通过设备 ID 访问点位（不带 channelId）
 	api.Get("/devices/:deviceId/points", s.getDevicePoints)
@@ -1579,6 +1580,37 @@ func writeErrorStatus(err error) (int, string) {
 	default:
 		return fiber.StatusInternalServerError, msg
 	}
+}
+
+// triggerReadAllPoints 手动触发一次指定设备全部点位的读取（相当于采集循环立即执行一轮），
+// 并把结果写入 shadow 供前端刷新展示。返回最新数值，便于前端即时更新。
+func (s *Server) triggerReadAllPoints(c *fiber.Ctx) error {
+	channelId := c.Params("channelId")
+	deviceId := c.Params("deviceId")
+
+	// 兼容：channelId 缺失时在全部通道中定位设备
+	if channelId == "" {
+		for _, ch := range s.cm.GetChannels() {
+			for _, dev := range ch.Devices {
+				if dev.ID == deviceId {
+					channelId = ch.ID
+					break
+				}
+			}
+			if channelId != "" {
+				break
+			}
+		}
+	}
+	if channelId == "" {
+		return c.Status(404).JSON(fiber.Map{"error": "device not found in any channel"})
+	}
+
+	values, err := s.cm.ReadAllPoints(channelId, deviceId)
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.JSON(fiber.Map{"success": true, "values": values, "count": len(values)})
 }
 
 // writePoint 写入点位值

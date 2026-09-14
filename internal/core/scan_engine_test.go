@@ -54,30 +54,6 @@ func TestScanEngine_Schedule(t *testing.T) {
 	}
 }
 
-func TestScanEngine_AntiStarvation(t *testing.T) {
-	config := ScanEngineConfig{
-		TickInterval:      10 * time.Millisecond,
-		WorkerCount:       1,
-		MaxQueueSize:      100,
-		AntiStarvationSec: 1,
-	}
-
-	se := NewScanEngine(config)
-
-	task := se.AddTask("device1", "modbus-tcp", 1*time.Second, 5, []string{"point1"}, nil)
-
-	now := time.Now()
-	task.NextRun = now.Add(-2 * time.Second)
-
-	se.enforceAntiStarvation(now)
-
-	task.mu.Lock()
-	if task.Priority != 10 {
-		t.Errorf("防饿死后优先级应为10，实际%d", task.Priority)
-	}
-	task.mu.Unlock()
-}
-
 func TestScanEngine_Priority(t *testing.T) {
 	pq := &PriorityQueue{}
 	heap.Init(pq)
@@ -328,8 +304,9 @@ func TestScanEngine_Degradation(t *testing.T) {
 	if task.Status != ScanTaskStatusDegraded {
 		t.Errorf("任务状态应为Degraded，实际%s", task.Status)
 	}
-	if task.Interval != 100*time.Millisecond {
-		t.Errorf("采集间隔应翻倍，期望100ms，实际%s", task.Interval)
+	// 预置 3 次失败再累积 1 次共 4 次，按 2^(n-2) 退避 ⇒ ×4 = 200ms。
+	if task.Interval != 200*time.Millisecond {
+		t.Errorf("采集间隔应按 2^n 退避，期望200ms，实际%s", task.Interval)
 	}
 	task.mu.Unlock()
 }

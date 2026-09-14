@@ -39,7 +39,6 @@ func newSevenSlaveScanEngine(t *testing.T, offlineDriver driver.Driver, healthy 
 		TickInterval: 5 * time.Millisecond,
 		WorkerCount:  4,
 		MaxQueueSize: 1000,
-		JitterBound:  0,
 	})
 	se.RegisterProtocol("modbus-tcp", ProtocolTypeSerial)
 

@@ -77,12 +77,11 @@ func runG007DeviceThroughputBenchmark(t *testing.T, cfg g007BenchmarkConfig) g00
 
 	sc := NewShadowCore()
 	se := NewScanEngine(ScanEngineConfig{
-		TickInterval:      10 * time.Millisecond,
-		WorkerCount:       32,
-		MaxQueueSize:      50000,
-		AntiStarvationSec: 300,
-		GoroutineLimit:    512,
-		ConnectionLimit:   200,
+		TickInterval:    10 * time.Millisecond,
+		WorkerCount:     32,
+		MaxQueueSize:    50000,
+		GoroutineLimit:  512,
+		ConnectionLimit: 200,
 	})
 	se.SetShadowCore(sc)
 	se.RegisterProtocol("modbus-tcp", ProtocolTypeParallel)

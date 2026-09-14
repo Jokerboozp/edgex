@@ -37,7 +37,6 @@ func TestScanEngine_StressTest(t *testing.T) {
 		TickInterval:      10 * time.Millisecond,
 		WorkerCount:       16,
 		MaxQueueSize:      10000,
-		AntiStarvationSec: 300,
 		GoroutineLimit:    100,
 		ConnectionLimit:   50,
 	}
@@ -79,7 +78,6 @@ func TestScanEngine_ShadowIntegration(t *testing.T) {
 		TickInterval:      10 * time.Millisecond,
 		WorkerCount:       4,
 		MaxQueueSize:      1000,
-		AntiStarvationSec: 300,
 		GoroutineLimit:    50,
 		ConnectionLimit:   20,
 	}

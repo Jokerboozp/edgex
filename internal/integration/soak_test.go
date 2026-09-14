@@ -29,12 +29,11 @@ func TestSoak_ScanEngineStability(t *testing.T) {
 
 	sc := core.NewShadowCore()
 	se := core.NewScanEngine(core.ScanEngineConfig{
-		TickInterval:      10 * time.Millisecond,
-		WorkerCount:       32,
-		MaxQueueSize:      20000,
-		AntiStarvationSec: 300,
-		GoroutineLimit:    512,
-		ConnectionLimit:   200,
+		TickInterval:    10 * time.Millisecond,
+		WorkerCount:     32,
+		MaxQueueSize:    20000,
+		GoroutineLimit:  512,
+		ConnectionLimit: 200,
 	})
 	se.SetShadowCore(sc)
 	se.RegisterProtocol("modbus-tcp", core.ProtocolTypeParallel)

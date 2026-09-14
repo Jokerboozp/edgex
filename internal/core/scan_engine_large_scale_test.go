@@ -26,7 +26,6 @@ func TestScanEngine_SerialProtocolIsolation(t *testing.T) {
 		TickInterval:      10 * time.Millisecond,
 		WorkerCount:       16,
 		MaxQueueSize:      10000,
-		AntiStarvationSec: 300,
 		GoroutineLimit:    100,
 		ConnectionLimit:   50,
 	}
@@ -54,7 +53,6 @@ func TestScanEngine_ParallelProtocolBackpressure(t *testing.T) {
 		TickInterval:      10 * time.Millisecond,
 		WorkerCount:       8,
 		MaxQueueSize:      1000,
-		AntiStarvationSec: 300,
 		GoroutineLimit:    20,
 		ConnectionLimit:   10,
 	}
@@ -82,7 +80,6 @@ func TestScanEngine_MixedProtocolStressTest(t *testing.T) {
 		TickInterval:      10 * time.Millisecond,
 		WorkerCount:       32,
 		MaxQueueSize:      50000,
-		AntiStarvationSec: 300,
 		GoroutineLimit:    256,
 		ConnectionLimit:   80,
 	}

@@ -31,74 +31,6 @@ func (panicDriver) GetConnectionMetrics() (int64, int64, string, string, time.Ti
 // Queue integrity (double-enqueue / concurrent double-execution)
 // ---------------------------------------------------------------------------
 
-// TestAntiStarvation_RepeatedRescueKeepsSingleQueueEntry is the regression
-// guard for the double-enqueue bug: enforceAntiStarvation used to heap.Push
-// an already-queued task, producing two heap entries for one *ScanTask.
-// popReadyTaskEDF would then dispatch the same task twice concurrently,
-// racing on SetStatus / Points / rescheduleTask.
-func TestAntiStarvation_RepeatedRescueKeepsSingleQueueEntry(t *testing.T) {
-	se := NewScanEngine(ScanEngineConfig{AntiStarvationSec: 1, JitterBound: 10 * time.Millisecond})
-	now := time.Now()
-
-	task := se.AddTask("dev1", "modbus-tcp", time.Second, 3, []string{"p1"}, nil)
-
-	for i := 0; i < 5; i++ {
-		// Force overdue before each rescue; AddTask already queued the task.
-		task.mu.Lock()
-		task.NextRun = now.Add(-2 * time.Second)
-		task.mu.Unlock()
-
-		se.enforceAntiStarvation(now)
-	}
-
-	se.mu.RLock()
-	queueLen := se.priorityQueue.Len()
-	se.mu.RUnlock()
-
-	if queueLen != 1 {
-		t.Fatalf("priority queue length = %d after 5 rescues, want 1 (duplicate entries cause concurrent double execution)", queueLen)
-	}
-	if res := se.GetMetrics().Snapshot()["starvation_rescue_total"].(uint64); res != 5 {
-		t.Fatalf("starvation_rescue_total = %d, want 5 (rescue must still trigger each round)", res)
-	}
-}
-
-// TestAntiStarvation_RescuesInFlightTaskExactlyOnce verifies a task that was
-// popped (running/idle, not in queue) is pushed back exactly once.
-func TestAntiStarvation_RescuesInFlightTaskExactlyOnce(t *testing.T) {
-	se := NewScanEngine(ScanEngineConfig{AntiStarvationSec: 1, JitterBound: 10 * time.Millisecond})
-	now := time.Now()
-
-	task := se.AddTask("dev1", "modbus-tcp", time.Second, 3, []string{"p1"}, nil)
-	task.mu.Lock()
-	task.NextRun = now.Add(-2 * time.Second)
-	task.mu.Unlock()
-
-	// Simulate an in-flight collect: pop it out of the queue.
-	task.mu.Lock()
-	task.NextRun = now.Add(-2 * time.Second)
-	task.mu.Unlock()
-	popped := se.popReadyTaskEDF(now)
-	if popped != task {
-		t.Fatalf("expected to pop the task, got %v", popped)
-	}
-	if task.isQueued() {
-		t.Fatalf("task must not report queued after pop")
-	}
-
-	se.enforceAntiStarvation(now)
-
-	se.mu.RLock()
-	queueLen := se.priorityQueue.Len()
-	se.mu.RUnlock()
-	if queueLen != 1 {
-		t.Fatalf("queue length = %d, want 1", queueLen)
-	}
-	if !task.isQueued() {
-		t.Fatalf("task must report queued after rescue")
-	}
-}
-
 // TestRemoveTask_ClearsQueueEntry ensures a removed task leaves no stale
 // heap pointer behind (it used to linger until popped and skipped).
 func TestRemoveTask_ClearsQueueEntry(t *testing.T) {
@@ -270,7 +202,7 @@ func TestExecuteTaskAsync_RecoversPanicAndRearmsTask(t *testing.T) {
 	task.mu.Lock()
 	task.NextRun = time.Now().Add(-time.Second)
 	task.mu.Unlock()
-	if popped := se.popReadyTaskEDF(time.Now()); popped != task {
+	if popped := se.popReadyTask(time.Now()); popped != task {
 		t.Fatalf("expected to pop the task")
 	}
 

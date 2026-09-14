@@ -352,37 +352,6 @@ func (r *resettingStubDriver) ResetDeviceCollection(deviceID string) {
 	r.resetCalled = true
 }
 
-func TestScanEngine_UpdateTaskStateAggregated(t *testing.T) {
-	se := NewScanEngine(ScanEngineConfig{})
-	task := se.AddTask("dev1", "modbus-tcp", time.Second, 5, []string{"p1"}, nil)
-	task.BaseInterval = time.Second
-
-	se.updateTaskStateAggregated(task, AggregatedStats{SuccessCount: 2, FailCount: 0})
-	if task.ConsecutiveSuccess != 2 {
-		t.Fatalf("ConsecutiveSuccess = %d, want 2", task.ConsecutiveSuccess)
-	}
-
-	se.updateTaskStateAggregated(task, AggregatedStats{FailCount: 3, FailRate: 0.5})
-	if task.ConsecutiveFailures < 3 {
-		t.Fatalf("ConsecutiveFailures = %d, want ≥ 3", task.ConsecutiveFailures)
-	}
-}
-
-func TestScanEngine_ApplyAggregatedFeedback(t *testing.T) {
-	se := NewScanEngine(ScanEngineConfig{})
-	task := se.AddTask("dev-feed", "modbus-tcp", time.Second, 5, []string{"p1"}, nil)
-
-	se.feedbackPendingMu.Lock()
-	se.feedbackPending["dev-feed"] = task
-	se.feedbackPendingMu.Unlock()
-
-	se.applyAggregatedFeedback("dev-feed", AggregatedStats{SuccessCount: 1, FailCount: 0})
-	if task.ConsecutiveSuccess != 1 {
-		t.Fatalf("feedback apply ConsecutiveSuccess = %d, want 1", task.ConsecutiveSuccess)
-	}
-	se.applyAggregatedFeedback("missing", AggregatedStats{SuccessCount: 1})
-}
-
 func TestValidateDeviceInterval(t *testing.T) {
 	cm := newTestChannelManager()
 
@@ -519,16 +488,6 @@ func TestScanEngine_RemoveTask(t *testing.T) {
 	se.RemoveTask("missing-id")
 }
 
-func TestAdaptiveThrottle_UpdateDeviceRTT(t *testing.T) {
-	at := NewAdaptiveThrottle(nil)
-	at.UpdateDeviceRTT("dev1", 500)
-	if eff := at.effectiveIntervalForDevice("dev1", 100*time.Millisecond); eff < 100*time.Millisecond {
-		t.Fatalf("effective interval = %v", eff)
-	}
-	var nilAt *AdaptiveThrottle
-	nilAt.UpdateDeviceRTT("dev1", 100)
-}
-
 func TestGetDeviceID(t *testing.T) {
 	id, ok := getDeviceID(map[string]any{"bacnet_device_id": float64(42)})
 	if !ok || id != 42 {
@@ -562,12 +521,5 @@ func TestScanEngineAdapter_GetDriverAndUpdateInterval(t *testing.T) {
 	adapter.Stop()
 	if adapter.GetPendingTaskCount() < 0 {
 		t.Fatal("pending count should be non-negative")
-	}
-}
-
-func TestNewFeedbackAggregator_DefaultOnFlush(t *testing.T) {
-	fa := NewFeedbackAggregator(0, nil)
-	if fa.Window() != 2*time.Second {
-		t.Fatalf("default window = %v", fa.Window())
 	}
 }
