@@ -1,20 +1,6 @@
 <template>
   <div class="page-shell dashboard-page">
 
-    <!-- Tech status bar -->
-    <div class="dashboard-statusbar">
-      <div class="dashboard-statusbar__brand">
-        <span class="dashboard-statusbar__brand-mark">EC</span>
-        <span class="dashboard-statusbar__brand-name">edgeCore</span>
-        <span class="dashboard-statusbar__mode">边缘节点 · 数据中台</span>
-      </div>
-      <div class="dashboard-statusbar__meta">
-        <span class="dashboard-statusbar__live"><span class="status-dot"></span>实时监控</span>
-        <span class="dashboard-statusbar__conn"><span class="conn-dot" :class="dashboardError ? 'off' : 'on'"></span>{{ dashboardError ? '连接异常' : '系统正常' }}</span>
-        <span class="dashboard-statusbar__clock">{{ nowText }}</span>
-      </div>
-    </div>
-
     <!-- Primary: ScanEngine SLA / Soak monitoring -->
 
     <section class="dashboard-zone dashboard-zone--primary" aria-label="运行监控">

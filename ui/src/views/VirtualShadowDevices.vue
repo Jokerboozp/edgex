@@ -122,8 +122,8 @@
               </a-tag>
               <span class="ep-id">{{ pt.point_id }}</span>
               <span class="ep-name">{{ pt.name || '—' }}</span>
-              <span v-if="runtimePointValue(record.id, pt.point_id)" class="ep-value">
-                = {{ formatValue(runtimePointValue(record.id, pt.point_id)) }}
+              <span v-if="runtimePointValue(record.id, pt)" class="ep-value">
+                = {{ formatValue(runtimePointValue(record.id, pt)) }}
               </span>
             </div>
             <div v-if="record.points.length > 3" class="vs-more-points">
@@ -151,7 +151,9 @@
           :bordered="false"
           :pagination="{ showTotal: true }"
           :expandable="expandable"
+          :expanded-keys="expandedKeys"
           :scroll="{ x: 960 }"
+          @expand="onTableExpand"
         >
           <template #id="{ record }">
             <a-tooltip :content="record.id">
@@ -185,7 +187,9 @@
           </template>
           <template #ops="{ record }">
             <div class="table-ops">
-              <a-button type="text" size="small" @click="openDetail(record)">查看值</a-button>
+              <a-button type="text" size="small" @click="toggleExpand(record)">
+                {{ isExpanded(record.id) ? '收起值' : '查看值' }}
+              </a-button>
               <a-button type="text" size="small" @click="openBuilder(record)">编辑</a-button>
               <a-popconfirm content="确定删除该虚拟设备？" @ok="removeDevice(record.id)">
                 <a-button type="text" size="small" status="danger">删除</a-button>
@@ -193,21 +197,55 @@
             </div>
           </template>
           <template #expand-row="{ record }">
-            <div class="expand-points">
-              <div
-                v-for="(pt, idx) in record.points || []"
-                :key="idx"
-                class="expand-point-row"
-              >
-                <a-tag :color="pt.mode === 'formula' ? 'arcoblue' : 'green'" size="small">
-                  {{ pt.mode === 'formula' ? '计算' : '映射' }}
-                </a-tag>
-                <span class="ep-id">{{ pt.point_id }}</span>
-                <span class="ep-name">{{ pt.name || '—' }}</span>
-                <code class="ep-expr">{{ pointExpr(pt) }}</code>
-                <span v-if="runtimePointValue(record.id, pt.point_id)" class="ep-value">
-                  = {{ formatValue(runtimePointValue(record.id, pt.point_id)) }}
-                </span>
+            <div class="expand-points-container">
+              <div class="expand-points-header">
+                <div class="expand-points-title">
+                  <span class="expand-title-text">点位映射与当前值</span>
+                  <span class="expand-count-badge">{{ record.points?.length || 0 }} 个点位</span>
+                  <span v-if="runtimeMap[record.id]" class="runtime-badge">v{{ runtimeMap[record.id].version }}</span>
+                </div>
+                <a-button
+                  type="outline"
+                  size="mini"
+                  class="expand-refresh-btn"
+                  :loading="refreshingDeviceId === record.id"
+                  @click="refreshDeviceRuntime(record)"
+                >
+                  <template #icon><icon-refresh /></template>
+                  刷新实时值
+                </a-button>
+              </div>
+              <div class="expand-points-grid">
+                <div class="expand-grid-head">
+                  <span class="grid-th th-point">点位</span>
+                  <span class="grid-th th-mode">模式</span>
+                  <span class="grid-th th-expr">表达式 / 映射来源</span>
+                  <span class="grid-th th-val">当前实时值</span>
+                </div>
+                <div
+                  v-for="(pt, idx) in record.points || []"
+                  :key="idx"
+                  class="expand-grid-row"
+                >
+                  <div class="grid-td td-point">
+                    <span class="ep-id">{{ pt.point_id }}</span>
+                    <span v-if="pt.name" class="ep-name">({{ pt.name }})</span>
+                  </div>
+                  <div class="grid-td td-mode">
+                    <a-tag :color="pt.mode === 'formula' ? 'arcoblue' : 'green'" size="small" bordered>
+                      {{ pt.mode === 'formula' ? '计算' : '映射' }}
+                    </a-tag>
+                  </div>
+                  <div class="grid-td td-expr">
+                    <code class="ep-expr">{{ pointExpr(pt) }}</code>
+                  </div>
+                  <div class="grid-td td-val">
+                    <span v-if="runtimePointValue(record.id, pt)" class="ep-live-value">
+                      {{ formatValue(runtimePointValue(record.id, pt)) }}
+                    </span>
+                    <span v-else class="text-muted">—</span>
+                  </div>
+                </div>
               </div>
             </div>
           </template>
@@ -680,8 +718,8 @@
                   <div class="hint">从左侧拖入点位插入引用；支持 + - * / 和括号</div>
                 </div>
 
-                <div v-if="editingId && previewValues[pt.point_id]" class="preview-row">
-                  预览值: <strong>{{ formatValue(previewValues[pt.point_id]) }}</strong>
+                <div v-if="pointPreviewValue(pt) != null" class="preview-row">
+                  预览值: <strong>{{ formatValue(pointPreviewValue(pt)) }}</strong>
                 </div>
               </div>
             </div>
@@ -1118,6 +1156,42 @@ const detailDevice = ref(null)
 const detailRuntime = ref(null)
 const detailLoading = ref(false)
 
+const expandedKeys = ref([])
+const refreshingDeviceId = ref('')
+
+function isExpanded(id) {
+  return expandedKeys.value.includes(id)
+}
+
+function toggleExpand(record) {
+  if (!record?.id) return
+  const id = record.id
+  const idx = expandedKeys.value.indexOf(id)
+  if (idx > -1) {
+    expandedKeys.value = expandedKeys.value.filter(k => k !== id)
+  } else {
+    expandedKeys.value = [...expandedKeys.value, id]
+    onTableExpand(id, record)
+  }
+}
+
+async function refreshDeviceRuntime(record) {
+  if (!record?.id) return
+  refreshingDeviceId.value = record.id
+  try {
+    const refs = (record.points || []).map(p => p.source_ref).filter(Boolean)
+    if (refs.length) {
+      await loadSourceValueMap(refs.map(r => ({ ref: r })))
+    }
+    await refreshRuntime(record.id, true)
+    Message.success('实时值已刷新')
+  } catch (_) {
+    Message.error('刷新实时值失败')
+  } finally {
+    refreshingDeviceId.value = ''
+  }
+}
+
 const operators = FORMULA_OPERATORS
 
 const columns = [
@@ -1325,12 +1399,17 @@ const detailRows = computed(() => {
   if (!detailDevice.value) return []
   const pts = detailDevice.value.points || []
   const runtimePts = detailRuntime.value?.points || {}
-  return pts.map(pt => ({
-    point_id: pt.point_id,
-    mode: pt.mode,
-    expr: pointExpr(pt),
-    runtime: runtimePts[pt.point_id]
-  }))
+  return pts.map(pt => {
+    const rt = runtimePts[pt.point_id]
+    const hasRtVal = rt != null && (typeof rt !== 'object' || rt.value != null)
+    const src = pt.source_ref ? sourceValue(pt.source_ref) : null
+    return {
+      point_id: pt.point_id,
+      mode: pt.mode,
+      expr: pointExpr(pt),
+      runtime: hasRtVal ? rt : (src ?? rt)
+    }
+  })
 })
 
 function pointExpr(pt) {
@@ -1353,9 +1432,30 @@ function formatValue(info) {
   return String(info)
 }
 
-function runtimePointValue(deviceId, pointId) {
+function runtimePointValue(deviceId, pt) {
+  const pointId = typeof pt === 'object' ? pt.point_id : pt
   const rt = runtimeMap[deviceId]
-  return rt?.points?.[pointId]
+  const rtPt = rt?.points?.[pointId]
+  if (rtPt != null && (typeof rtPt !== 'object' || rtPt.value != null)) {
+    return rtPt
+  }
+  if (typeof pt === 'object' && pt.source_ref) {
+    const src = sourceValue(pt.source_ref)
+    if (src != null) return src
+  }
+  return rtPt || null
+}
+
+function pointPreviewValue(pt) {
+  if (!pt) return null
+  const pv = previewValues[pt.point_id]
+  if (pv != null && (typeof pv !== 'object' || pv.value != null)) {
+    return pv
+  }
+  if (pt.mode === 'map' && pt.source_ref) {
+    return sourceValue(pt.source_ref)
+  }
+  return null
 }
 
 function formulaDeps(formula) {
@@ -1557,11 +1657,31 @@ async function fetchAll() {
     devices.value = normalizeArrayResponse(list)
     channels.value = normalizeArrayResponse(chList)
     await Promise.all(devices.value.map(d => refreshRuntime(d.id, false)))
+    
+    // 全量收集所有虚拟点位的映射来源引用，加载实时物理值，确保展开行与查看值立即可见
+    const allRefs = []
+    for (const dev of devices.value) {
+      for (const p of dev.points || []) {
+        if (p.source_ref) allRefs.push({ ref: p.source_ref })
+      }
+    }
+    if (allRefs.length) {
+      loadSourceValueMap(allRefs)
+    }
   } catch (_) {
     Message.error('加载虚拟影子设备失败')
   } finally {
     loading.value = false
   }
+}
+
+function onTableExpand(rowKey, record) {
+  if (!record || !record.points) return
+  const refs = record.points.map(p => p.source_ref).filter(Boolean)
+  if (refs.length) {
+    loadSourceValueMap(refs.map(r => ({ ref: r })))
+  }
+  refreshRuntime(record.id, true)
 }
 
 async function refreshAllRuntimes() {
@@ -2162,6 +2282,11 @@ function openDetail(record) {
   detailRuntime.value = runtimeMap[record.id] || null
   detailVisible.value = true
   refreshDetailRuntime()
+  // 确保物理源点位数据也立即加载，保持与编辑页一致
+  const refs = (record.points || []).map(p => p.source_ref).filter(Boolean)
+  if (refs.length) {
+    loadSourceValueMap(refs.map(r => ({ ref: r })))
+  }
 }
 
 async function refreshDetailRuntime() {

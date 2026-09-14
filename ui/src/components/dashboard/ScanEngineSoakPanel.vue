@@ -51,106 +51,22 @@
     </div>
 
     <template v-else>
-      <div class="soak-scan-classes soak-card">
-        <div class="soak-scan-classes__header">
-          <div class="soak-scan-classes__heading">
-            <div class="soak-scan-classes__title-row">
-              <h4 class="soak-card__title">Scan Class 明细</h4>
-              <a-button
-                type="text"
-                size="mini"
-                class="help-trigger-btn soak-scan-classes__help-btn"
-                aria-label="Scan Class 明细帮助"
-                @click="openScanClassHelp"
-              >
-                <template #icon><IconQuestionCircle /></template>
-              </a-button>
-            </div>
-            <p class="soak-scan-classes__subtitle">
-              按扫描间隔分组
-              <span v-if="scanClasses.length">· {{ scanClasses.length }} 种间隔</span>
-            </p>
-          </div>
-          <div class="soak-scan-classes__actions">
-            <span
-              v-if="snapshot.scan_class_late > 0"
-              class="soak-scan-classes__alert"
-            >
-              {{ snapshot.scan_class_late }} 迟到
-            </span>
-            <button
-              v-if="scanClasses.length"
-              class="soak-collapse-toggle"
-              :aria-expanded="!effectiveScanCollapsed"
-              aria-controls="scan-class-list"
-              @click="scanCollapsed = !effectiveScanCollapsed"
-            >
-              {{ effectiveScanCollapsed ? '展开' : '收起' }}
-              <icon-down v-if="effectiveScanCollapsed" :size="12" />
-              <icon-up v-else :size="12" />
-            </button>
-          </div>
-        </div>
-
-        <div v-if="scanClasses.length" id="scan-class-list" class="soak-scan-class-grid" :class="{ 'is-collapsed': effectiveScanCollapsed }">
-          <div class="soak-scan-class-grid__head" aria-hidden="true">
-            <span>周期</span>
-            <span>任务</span>
-            <span>积压</span>
-            <span>队列</span>
-            <span>迟到</span>
-            <span>成功率</span>
-          </div>
-          <div
-            v-for="row in scanClasses"
-            :key="row.class"
-            class="soak-scan-class-row"
-            :class="scanClassRowClass(row)"
-          >
-            <span class="soak-scan-class-row__period">{{ formatScanClassPeriod(row.class) }}</span>
-            <span class="soak-scan-class-metric">
-              <span class="soak-scan-class-metric__value">{{ row.tasks }}</span>
-            </span>
-            <span
-              class="soak-scan-class-metric"
-              :class="{ 'is-warn': row.backlog > 0 }"
-            >
-              <span class="soak-scan-class-metric__value">{{ row.backlog }}</span>
-            </span>
-            <span class="soak-scan-class-metric">
-              <span class="soak-scan-class-metric__value">{{ row.queue }}</span>
-            </span>
-            <span
-              class="soak-scan-class-metric"
-              :class="{ 'is-fail': row.late > 0 }"
-            >
-              <span class="soak-scan-class-metric__value">{{ row.late }}</span>
-            </span>
-            <span
-              class="soak-scan-class-metric"
-              :class="successMetricClass(row.success)"
-            >
-              <span class="soak-scan-class-metric__value">{{ formatRate(row.success) }}</span>
-            </span>
-          </div>
-        </div>
-
-        <div v-else class="soak-scan-classes__empty">暂无 Scan Class 数据</div>
-      </div>
-
-      <!-- Release Gate hero — scannable pass/fail -->
+      <!-- Release Gate hero — scannable pass/fail (首屏第一核心状态) -->
       <div class="soak-hero">
         <div class="soak-gate-summary" :class="gateSummaryClass">
           <div class="soak-gate-summary__main">
             <span class="soak-gate-summary__icon">{{ releaseGate.all_passed !== false ? '✓' : '✗' }}</span>
             <div>
-              <span class="soak-gate-summary__label">Release Gate</span>
+              <span class="soak-gate-summary__label">Release Gate · SLA 判定</span>
               <span class="soak-gate-summary__status">{{ gateSummaryText }}</span>
             </div>
           </div>
           <div class="soak-gate-summary__counts" v-if="releaseGateItems.length">
             <span class="soak-gate-count is-pass">{{ passCount }} 达标</span>
             <span class="soak-gate-count is-fail" v-if="failCount">{{ failCount }} 未达标</span>
+            <span v-if="scanClasses.length" class="soak-gate-count is-neutral" style="cursor: pointer" @click="openScanClassHelp" title="查看 Scan Class 诊断">
+              {{ scanClasses.length }} 组扫描周期
+            </span>
             <button
               class="soak-collapse-toggle"
               :aria-expanded="!effectiveGateCollapsed"

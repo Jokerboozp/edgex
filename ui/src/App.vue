@@ -6,8 +6,8 @@
       :class="{ 'is-collapsed': drawerRail }"
     >
       <div class="sidebar-header">
-        <div class="logo-icon">
-          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+        <div class="logo-icon" :class="{ 'is-collapsed': drawerRail }">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
           </svg>
         </div>
@@ -15,34 +15,48 @@
       </div>
 
       <nav class="sidebar-nav">
-        <router-link to="/" class="nav-item" active-class="nav-item-active" exact>
-          <span class="nav-icon"><icon-apps /></span>
-          <span v-if="!drawerRail" class="nav-text">首页监控</span>
-        </router-link>
-        <router-link to="/channels" class="nav-item" active-class="nav-item-active">
-          <span class="nav-icon"><icon-link /></span>
-          <span v-if="!drawerRail" class="nav-text">采集通道</span>
-        </router-link>
-        <router-link to="/edge-compute" class="nav-item" active-class="nav-item-active">
-          <span class="nav-icon"><icon-tool /></span>
-          <span v-if="!drawerRail" class="nav-text">边缘计算</span>
-        </router-link>
-        <router-link to="/virtual-shadows" class="nav-item" active-class="nav-item-active">
-          <span class="nav-icon"><icon-thunderbolt /></span>
-          <span v-if="!drawerRail" class="nav-text">虚拟影子</span>
-        </router-link>
-        <router-link to="/northbound" class="nav-item" active-class="nav-item-active">
-          <span class="nav-icon"><icon-arrow-up /></span>
-          <span v-if="!drawerRail" class="nav-text">北向接口</span>
-        </router-link>
-        <router-link to="/logs" class="nav-item" active-class="nav-item-active">
-          <span class="nav-icon"><icon-file /></span>
-          <span v-if="!drawerRail" class="nav-text">系统日志</span>
-        </router-link>
-        <router-link to="/system" class="nav-item" active-class="nav-item-active">
-          <span class="nav-icon"><icon-settings /></span>
-          <span v-if="!drawerRail" class="nav-text">系统设置</span>
-        </router-link>
+        <a-tooltip :disabled="!drawerRail" content="首页监控" position="right">
+          <router-link to="/" class="nav-item" active-class="nav-item-active" exact>
+            <span class="nav-icon"><icon-apps /></span>
+            <span v-if="!drawerRail" class="nav-text">首页监控</span>
+          </router-link>
+        </a-tooltip>
+        <a-tooltip :disabled="!drawerRail" content="采集通道" position="right">
+          <router-link to="/channels" class="nav-item" active-class="nav-item-active">
+            <span class="nav-icon"><icon-link /></span>
+            <span v-if="!drawerRail" class="nav-text">采集通道</span>
+          </router-link>
+        </a-tooltip>
+        <a-tooltip :disabled="!drawerRail" content="边缘计算" position="right">
+          <router-link to="/edge-compute" class="nav-item" active-class="nav-item-active">
+            <span class="nav-icon"><icon-tool /></span>
+            <span v-if="!drawerRail" class="nav-text">边缘计算</span>
+          </router-link>
+        </a-tooltip>
+        <a-tooltip :disabled="!drawerRail" content="虚拟影子" position="right">
+          <router-link to="/virtual-shadows" class="nav-item" active-class="nav-item-active">
+            <span class="nav-icon"><icon-thunderbolt /></span>
+            <span v-if="!drawerRail" class="nav-text">虚拟影子</span>
+          </router-link>
+        </a-tooltip>
+        <a-tooltip :disabled="!drawerRail" content="北向接口" position="right">
+          <router-link to="/northbound" class="nav-item" active-class="nav-item-active">
+            <span class="nav-icon"><icon-arrow-up /></span>
+            <span v-if="!drawerRail" class="nav-text">北向接口</span>
+          </router-link>
+        </a-tooltip>
+        <a-tooltip :disabled="!drawerRail" content="系统日志" position="right">
+          <router-link to="/logs" class="nav-item" active-class="nav-item-active">
+            <span class="nav-icon"><icon-file /></span>
+            <span v-if="!drawerRail" class="nav-text">系统日志</span>
+          </router-link>
+        </a-tooltip>
+        <a-tooltip :disabled="!drawerRail" content="系统设置" position="right">
+          <router-link to="/system" class="nav-item" active-class="nav-item-active">
+            <span class="nav-icon"><icon-settings /></span>
+            <span v-if="!drawerRail" class="nav-text">系统设置</span>
+          </router-link>
+        </a-tooltip>
       </nav>
 
       <div class="sidebar-footer">

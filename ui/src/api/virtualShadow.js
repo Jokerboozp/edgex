@@ -43,9 +43,21 @@ export function deleteVirtualShadow(id) {
 export async function fetchSourceValues(sources) {
   const byDevice = new Map()
   for (const src of sources || []) {
-    const key = `${src.channel_id}::${src.device_id}`
-    if (!byDevice.has(key)) {
-      byDevice.set(key, { channelId: src.channel_id, deviceId: src.device_id })
+    let chId = src.channel_id || src.channelId
+    let devId = src.device_id || src.deviceId
+    const ref = src.ref || (typeof src === 'string' ? src : null)
+    if ((!chId || !devId) && ref) {
+      const parts = ref.split('.')
+      if (parts.length >= 3) {
+        chId = parts[0]
+        devId = parts[1]
+      }
+    }
+    if (chId && devId) {
+      const key = `${chId}::${devId}`
+      if (!byDevice.has(key)) {
+        byDevice.set(key, { channelId: chId, deviceId: devId })
+      }
     }
   }
   const valueMap = {}

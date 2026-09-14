@@ -1481,7 +1481,7 @@ func (s *Server) getRealtimeValues(c *fiber.Ctx) error {
 		shadowID := fmt.Sprintf("shadow-%s", deviceID)
 		shadow, err := shadowCore.GetShadowDevice(shadowID)
 		if err == nil && shadow != nil {
-			if channelID == "" || shadow.ChannelID == "" || shadow.ChannelID == channelID {
+			if channelID == "" || shadow.ChannelID == "" || strings.EqualFold(shadow.ChannelID, channelID) {
 				filtered := make(map[string]any)
 				for pid, pt := range shadow.Points {
 					collectedAt := pt.CollectedAt
@@ -1501,7 +1501,7 @@ func (s *Server) getRealtimeValues(c *fiber.Ctx) error {
 		}
 
 		if vd, err := shadowCore.GetVirtualShadowDevice(deviceID); err == nil && vd != nil {
-			if channelID == "" || vd.ChannelID == "" || vd.ChannelID == channelID {
+			if channelID == "" || vd.ChannelID == "" || strings.EqualFold(vd.ChannelID, channelID) {
 				filtered := make(map[string]any)
 				for pid, pt := range vd.Points {
 					collectedAt := pt.CollectedAt

@@ -251,43 +251,44 @@
   background: var(--bg);
 }
 
-/* ── KPI 指标区 ── */
+/* ── KPI 指标区（扁平化：去除嵌套卡片边框与底色） ── */
 .channel-list-page .channel-kpi-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: var(--bg);
-  overflow: hidden;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
+  gap: var(--space-2);
 }
 
 .channel-list-page .channel-kpi {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  gap: 2px;
-  padding: var(--space-2) var(--space-1);
+  gap: 3px;
+  padding: 0;
   min-width: 0;
 }
 
 .channel-list-page .channel-kpi + .channel-kpi {
-  border-left: 1px solid var(--border);
+  border-left: none;
 }
 
 .channel-list-page .channel-kpi-label {
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 500;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  letter-spacing: 0.02em;
   color: var(--text-tertiary);
   line-height: 1.2;
 }
 
 .channel-list-page .channel-kpi-value {
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 600;
   color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
   line-height: 1.25;
   white-space: nowrap;
   overflow: hidden;
@@ -309,15 +310,15 @@
   color: #d97706;
 }
 
-/* ── 通信质量 ── */
+/* ── 通信质量（扁平化：去除嵌套卡片边框与底色） ── */
 .channel-list-page .channel-metrics {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  padding: var(--space-2) var(--space-3) !important;
-  border: 1px solid var(--border) !important;
-  border-radius: var(--radius-sm) !important;
-  background: var(--bg) !important;
+  padding: 0 !important;
+  border: none !important;
+  border-radius: 0 !important;
+  background: transparent !important;
 }
 
 .channel-list-page .channel-metrics .metrics-header {
@@ -329,10 +330,9 @@
 }
 
 .channel-list-page .channel-metrics .metrics-label {
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 500;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  letter-spacing: 0.02em;
   color: var(--text-tertiary);
 }
 
@@ -353,9 +353,9 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  margin-top: var(--space-1);
-  padding: var(--space-3) var(--space-4);
-  background: var(--surface-2);
+  margin-top: var(--space-2);
+  padding: var(--space-2) var(--space-5) var(--space-3);
+  background: transparent;
   border-top: 1px solid var(--border);
 }
 

@@ -976,11 +976,11 @@
   letter-spacing: 0.02em;
 }
 
-/* 左右两组：等宽并排 */
+/* 左右两组：等宽并排，无内部嵌套边框卡片（杜绝大圈套小圈） */
 .soak-metric-split {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space-4);
+  gap: var(--space-6);
 }
 
 .soak-metric-group {
@@ -988,10 +988,10 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
-  padding: var(--space-4);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  background: var(--surface-1);
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
   overflow: visible; /* 严禁裁剪文字 */
 }
 
@@ -1025,11 +1025,11 @@
 .metric-dot--ingress { background: var(--flow-ingress); box-shadow: 0 0 0 3px var(--flow-ingress-soft); }
 .metric-dot--egress   { background: var(--flow-egress);   box-shadow: 0 0 0 3px var(--flow-egress-soft); }
 
-/* 读数瓦片网格 */
+/* 扁平纯文字指标网格（无小卡片边框） */
 .soak-metric-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: var(--space-2) var(--space-3);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-3) var(--space-4);
   align-content: start;
 }
 
@@ -1037,16 +1037,16 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 3px;
-  padding: 7px 10px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: var(--bg);
+  gap: 4px;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
 }
 
 .soak-kv__label {
-  font-size: 10.5px;
-  letter-spacing: 0.04em;
+  font-size: 11px;
+  letter-spacing: 0.02em;
   color: var(--text-tertiary);
   white-space: nowrap;
   overflow: hidden;
@@ -1056,7 +1056,7 @@
 .soak-kv__txt {
   display: block;
   min-width: 0;
-  font-size: 15px;
+  font-size: 18px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   color: var(--text-primary);
@@ -1105,13 +1105,13 @@
 .soak-metric-group .soak-kv__txt.is-warn  { color: var(--edgeCore-warning); }
 .soak-metric-group .soak-kv__txt.is-fail  { color: var(--edgeCore-error); }
 
-/* 中和旧版浮动装饰（左侧色条 / 渐变渗色背景 / 主题选用滑色） */
+/* 中和旧版浮动装饰（彻底扁平化，无内部嵌套背景和边框） */
 .soak-metric-group:first-child,
 .soak-metric-group:last-child,
 .dark-theme .soak-metric-group:first-child,
 .dark-theme .soak-metric-group:last-child {
-  background: var(--surface-1);
-  border-color: var(--border);
+  background: transparent;
+  border: none;
 }
 
 .soak-metric-group::before,

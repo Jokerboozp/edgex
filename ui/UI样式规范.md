@@ -259,63 +259,71 @@ Main Content (centered max-width)
 
 其他数据密集型页面可选用 `max-width: none`，但保持内边距。
 
-### 3.3 Sidebar（极简化 — 消失感 Vanishing UI）
+### 3.3 Sidebar（极简化 — 消失感 Vanishing UI & 现代工业 SaaS 微交互）
 
-**设计目标**：Sidebar 平时「消失」，hover 才显现结构。
+**设计目标**：Sidebar 平时融入背景，hover 触发展现结构，拥有 Linear 级的灵动微交互与工控系统所需的精准识别度。侧边栏头部下划线与顶部 Header 下边框必须**严格对齐并无缝连通**，形成一条横跨视口的极简连续基准线。
 
 ```css
-.sidebar {
-  width: 200px;
-  background: transparent;
-  padding: 16px;
+.industrial-sidebar {
+  width: var(--sidebar-width); /* 200px / 折叠态 64px */
+  background: var(--shell-bg);
+  border-right: 1px solid var(--border);
+  transition: width 0.24s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 0 0 var(--space-4) 0; /* 根容器无水平 padding，确保头部下边框延伸至边缘 */
+  box-sizing: border-box;
 }
 ```
 
-**菜单项**：
+#### 顶栏与侧栏下边框无缝连通规范（Crosshair Grid Baseline）
+- **连通原则**：`.sidebar-header` 与 `.industrial-header` 均具备精确一致的 `height: var(--header-height)`（48px）、`box-sizing: border-box` 与 `border-bottom: 1px solid var(--border)`。
+- **贯通布局**：侧边栏根容器不设左右内边距，`.sidebar-header` 占满侧栏 100% 宽度，其下划线从屏幕最左侧（$x=0$）无缝贯穿至侧边栏右边缘（$x=\text{width}$）；顶部 `.industrial-header` 下划线紧随其后贯穿至屏幕最右侧（$x=100\text{vw}$）。两条线在接缝处高精对齐、浑然一体，与侧边栏右分割线在交点处构成工控精密十字参考线。
+
+#### 品牌 Logo 区域（纯粹极简）
+- **Logo 图标**：采用微渐变科技底色（`linear-gradient(135deg, rgba(14,165,233,0.16), rgba(14,165,233,0.04))`），搭配柔和主色微描边（1px）与圆角。
+- **Logo 文本**：14px / 700 字重，色值 `--text-primary`，紧随 Logo 图标。遵循低噪声原则，**不得附加多余的装饰性 Badge（如 GATEWAY、PRO 等）**，保持视觉极致纯粹与工业高级感。
+- **收起态**：图标收起居中，带有柔和低频呼吸动效（`animation: logo-glow 3s infinite`）。
+
+#### 菜单项与微动效（Nav Items）
+- **常规态**：`padding: 8px 12px`，圆角 8px，文字与图标为 `--text-secondary`。
+- **Hover 态**：背景平滑过渡为 `--surface-2`，文字加深为 `--text-primary`，图标带有 `translateX(2px)` 的微动效反馈与轻微放大。
+- **Active 激活态**：
+  - 背景采用半透明主色混调渐变（`color-mix(in srgb, var(--primary) 8%, var(--surface-2))`）；
+  - 左侧保留高度 16px、圆角 9999px 的精致发光指示胶囊条（`width: 3px; background: var(--primary); box-shadow: 0 0 8px rgba(14,165,233,0.6)`）；
+  - 图标与文字统一转为高亮 `--text-primary` 并增强为 600 字重；
+  - 折叠态下，激活项呈现微主色光晕包裹，并由 Arco Tooltip 在 hover 时弹出提示。
+
+#### 底部状态与操作区
+- **连接状态 Chip**：绿色呼吸光点（`animation: status-pulse 2.4s infinite`），配合微底色容器。
+- **版本标识**：采用 `JetBrains Mono` 等宽字体，字阶 11px / 9px，清晰标明当前版本与构建时刻。
+- **操作按钮组**：收起切换按钮与检查更新按钮统一尺寸与圆角，Hover 时提供平滑背景反馈。
+
+### 3.4 Header（Vercel 级浮层与玻璃拟态 Glassmorphism）
 
 ```css
-.nav-item {
-  padding: 10px 12px;
-  border-radius: 8px;
-  color: var(--text-secondary);
-  transition: all 160ms ease;
-}
-
-.nav-item:hover {
-  background: var(--surface);
-  color: var(--text-primary);
-}
-
-.nav-item.active {
-  background: var(--surface-2);
-  color: var(--text-primary);
-  font-weight: 500;
-  /* minimal indicator：subtle dot 或字重变化，不用蓝条 */
+.industrial-header {
+  height: var(--header-height); /* 48px */
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  background: color-mix(in srgb, var(--shell-bg) 85%, transparent);
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
 }
 ```
 
-**关键变化**：
-
-| ❌ 移除 | ✅ 采用 |
-|---------|---------|
-| 左侧蓝条 active indicator | hover 才显现结构 |
-| 强 border 分割 | active 轻背景 + subtle dot |
-| box sidebar | transparent + spacing 分组 |
-
-**结构**：Logo → ↑16px → Nav Group 1 → ↑24px → Nav Group 2 → ↑auto → Status Area（L3，无 border-t）
-
-### 3.4 Header（Vercel 风格）
-
-```css
-.header {
-  height: 48px;
-  backdrop-filter: blur(10px);
-  background: rgba(255, 255, 255, 0.7);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-}
-```
-
-**体验重点**：floating header、非「盒子感」、UI 轻漂浮。
+#### 视觉与交互重点
+- **层级化面包屑**：
+  - 主标题采用 13px / 600 字重，色值 `--text-primary`；
+  - 分隔符采用浅斜杠 `/` 或 chevron 图标，透明度 0.4；
+  - 当前模块与页面标题采用 `--text-secondary`，支持长路径省略。
+- **AI 助手触发入口（MCP Capsule）**：
+  - 胶囊型药丸按钮，内置微渐变流光边框；
+  - MCP 连接时带有科技青/蓝呼吸光晕（`box-shadow: 0 0 12px rgba(14,165,233,0.3)`）。
+- **主题切换**：
+  - 微交互图标旋转与淡入淡出动效。
+- **用户头像与下拉菜单（User Menu）**：
+  - 头像支持微边框与主色渐变投影；
+  - 下拉面板采用毛玻璃背景（`backdrop-filter: blur(16px)`）、10px 圆角与柔和深层阴影（`0 10px 25px -5px rgba(0, 0, 0, 0.1)`）；
+  - 菜单项 Hover 时带有圆角胶囊浅底，危险操作（重启、退出）采用专用语义色并在 Hover 时显示柔和浅红/橙底色。
 
 面包屑：项间距 12px，`font-weight: 400`，L2 色 `--text-secondary`。
 
@@ -666,9 +674,9 @@ Dark 下 panel 背景 `--bg`，chip/block 背景 `--bg`，投放区半透明 tin
 **子组件**：`ui/src/components/dashboard/ScanEngineSoakPanel.vue` · `ScanEngineSoakHelpDrawer.vue`  
 **共享样式**：`page-layout.css` · `spacing.css` · `views-shared.css` · `theme.css`
 
-首页监控是 edgeCore 默认落地页，采用 **无 page-header 的全宽 Flow 布局**，按信息优先级分为三个视觉分区（Primary → Secondary → Tertiary），数据每 2s（摘要）/ 15s（Soak）轮询刷新。
+首页监控是 edgeCore 默认落地页，采用 **无 page-header 的全宽 Flow 布局** 与 **现代工控 HUD 控制台风格**，按信息优先级分为三个视觉分区（Primary → Secondary → Tertiary），数据每 2s（摘要）/ 15s（Soak）轮询刷新。
 
-#### 页面骨架
+#### 页面骨架与全宽 Flow 布局
 
 ```vue
 <div class="page-shell dashboard-page">
@@ -681,23 +689,28 @@ Dark 下 panel 背景 `--bg`，chip/block 背景 `--bg`，投放区半透明 tin
 | 属性 | 值 | 说明 |
 |------|-----|------|
 | 页面容器 | `.page-shell.dashboard-page` | 继承 `page-shell` padding（32px 24px），背景 `--shell-bg` |
-| 分区间距 | `gap: var(--space-6)`（24px） | 覆盖默认 `--section-gap`（32px），整体更紧凑 |
+| 页面标题 | **无** | 不渲染独立 `.page-header`，**严禁使用内部二次状态栏（避免“双重额头”堆叠）**；顶部全局 Header 已标明当前页面，内容首屏直接呈现 Primary 监控 |
+| 分区间距 | `gap: var(--space-6)`（24px） | 覆盖默认 `--section-gap`（32px），整体紧凑流畅 |
 | 布局宽度 | 全宽 | `shell.css` 中 `.page-container { max-width: none }`，不设 1200px 居中 |
-| 页面标题 | **无** | 不渲染 `.page-header`；Primary 区 Soak 面板自带「系统概览」标题 |
 
-#### 三级视觉分区（Visual Hierarchy）
+#### 三级视觉分区（Visual Hierarchy — 精简低噪声范式）
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│ PRIMARY — ScanEngine SLA / Soak（透明底，无外层 card 框）      │
-│   Release Gate · 快照 · 趋势 sparkline · Scan Class 明细     │
+│ PRIMARY — 运行监控（Release Gate SLA & 纯平运行指标快照）     │
+│   SLA 达标裁决（Release Gate）· 实时/峰值扁平流动指标网格     │
 ├─────────────────────────────────────────────────────────────┤
-│ SECONDARY — 系统资源（zone 标题 + 4 列 stat-card 紧凑网格）    │
+│ SECONDARY — 系统监控（4 列精致 stat-card 紧凑网格）           │
+│   CPU · 内存 · 协程 · 磁盘（工业微光渐变进度条）             │
 ├─────────────────────────────────────────────────────────────┤
-│ TERTIARY — 数据采集与上报（zone 标题 + 透明 block + 内嵌卡片） │
-│   采集通道（全宽）→ 北向上报 | 边缘计算（1.4 : 1 双列）        │
+│ TERTIARY — 数据流管道（采集 Ingress ↔ 上报/计算 Egress）     │
+│   南向采集通道（全宽卡片）→ 北向上报 | 边缘计算（双列流向）   │
 └─────────────────────────────────────────────────────────────┘
 ```
+
+> **扁平化与低噪声设计准则（严禁大圈套小圈）**：
+> 1. **去除俄罗斯套娃（No Nested Card Dolls）**：严禁“大卡片套中卡片、中卡片套小卡片”的多重边框嵌套。运行指标采用单层纯平容器，内部指标项为透明扁平的“标签 + 大数字（Tabular Nums）”组合，依靠 16px/24px 空间网格驱动，而非多重边框包裹。
+> 2. **组件精简原则**：移除了首页臃肿的“Scan Class 明细表格”平铺，避免单间隔场景下的视觉噪声；Scan Class 详细诊断信息收归至抽屉或按需查看，保持首页极致清爽、关键指标一眼扫尽。
 
 **Zone 标题**（Secondary / Tertiary 共用）：
 
