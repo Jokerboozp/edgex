@@ -4,99 +4,187 @@
    ========================================================================== */
 
 :root {
-  /* Background Layers */
-  --bg-deep: #090909;
-  --bg: #0D0D0F;
-  --bg-soft: #101114;
-  --bg-elevated: #16181B;
-  --bg-panel: #181A1D;
-  --bg-surface: #1C1D20;
+  /* =========================================
+     默认主题：Light（Crisp Engineering Light）
+     暗色由 [data-theme="dark"] 覆盖
+     ========================================= */
+  --bg-deep: #F4F4F6;
+  --bg: #FFFFFF;
+  --bg-soft: #EFEFF1;
+  --bg-elevated: #E5E5E8;
+  --bg-panel: #FFFFFF;
+  --bg-surface: #FAFAFB;
 
-  /* Text */
-  --text: #FFFFFF;
-  --text-soft: #D7D7D7;
-  --text-muted: #AAAAAA;
-  --text-dim: #777777;
+  --text: #18181B;
+  --text-soft: #3F3F46;
+  --text-muted: #71717A;
+  --text-dim: #A1A1AA;
 
-  /* Gold Palette */
-  --gold: #C8A75B;
-  --gold-light: #DDBB73;
-  --gold-bright: #E8D5A3;
-  --gold-deep: #B38F43;
-  --gold-dark: #8F7341;
-  --gold-hover: #F0D48A;
-  --gold-glow: rgba(200, 167, 91, 0.25);
-  --gold-glow-strong: rgba(200, 167, 91, 0.45);
-  --gold-soft: rgba(200, 167, 91, 0.12);
-  --gold-bg: rgba(200, 167, 91, 0.08);
-  --gold-bg-strong: rgba(200, 167, 91, 0.10);
-  --gold-border: rgba(200, 167, 91, 0.25);
-  --gold-border-hover: rgba(221, 187, 115, 0.55);
-  --gold-line: rgba(200, 167, 91, 0.15);
-  --gold-ghost: rgba(200, 167, 91, 0.04);
-  --gold-ghost-strong: rgba(200, 167, 91, 0.06);
-  --gold-selection: rgba(200, 167, 91, 0.35);
+  /* 工业金 · 浅色 */
+  --gold: #9A7B1C;
+  --gold-light: #7E6212;
+  --gold-bright: #B08D22;
+  --gold-deep: #6B5210;
+  --gold-dark: #5C450B;
+  --gold-hover: #7E6212;
+  --gold-glow: rgba(154, 123, 28, 0.14);
+  --gold-glow-strong: rgba(154, 123, 28, 0.22);
+  --gold-soft: rgba(154, 123, 28, 0.06);
+  --gold-bg: rgba(154, 123, 28, 0.03);
+  --gold-bg-strong: rgba(154, 123, 28, 0.05);
+  --gold-border: rgba(154, 123, 28, 0.2);
+  --gold-border-hover: rgba(126, 98, 18, 0.4);
+  --gold-line: rgba(154, 123, 28, 0.12);
+  --gold-ghost: rgba(154, 123, 28, 0.025);
+  --gold-ghost-strong: rgba(154, 123, 28, 0.04);
+  --gold-selection: rgba(154, 123, 28, 0.18);
 
   /* Semantic */
-  --success: #4ADE80;
-  --warning: #C8A75B;
-  --error: #EF4444;
-  --tip: #60A5FA;
-  --success-bg: rgba(74, 222, 128, 0.12);
-  --success-border: rgba(74, 222, 128, 0.3);
-  --success-glow: rgba(74, 222, 128, 0.5);
-  --error-bg: rgba(239, 68, 68, 0.12);
-  --error-border: rgba(239, 68, 68, 0.3);
-  --error-soft: rgba(239, 68, 68, 0.06);
-  --tip-bg: rgba(96, 165, 250, 0.12);
-  --tip-border: rgba(96, 165, 250, 0.3);
-  --tip-soft: rgba(96, 165, 250, 0.06);
+  --success: #1a7f37;
+  --warning: #9A7B1C;
+  --error: #cf222e;
+  --tip: #0969da;
+  --success-bg: rgba(26, 127, 55, 0.08);
+  --success-border: rgba(26, 127, 55, 0.24);
+  --success-glow: rgba(26, 127, 55, 0.28);
+  --error-bg: rgba(207, 34, 46, 0.07);
+  --error-border: rgba(207, 34, 46, 0.22);
+  --error-soft: rgba(207, 34, 46, 0.04);
+  --tip-bg: rgba(9, 105, 218, 0.07);
+  --tip-border: rgba(9, 105, 218, 0.22);
+  --tip-soft: rgba(9, 105, 218, 0.04);
 
-  /* Glass */
-  --glass: rgba(25, 25, 25, 0.55);
-  --glass-strong: rgba(22, 24, 27, 0.85);
+  /* Glass — 实色为主，仅作少量层叠，不用氛围模糊 */
+  --glass: rgba(255, 255, 255, 0.82);
+  --glass-strong: rgba(255, 255, 255, 0.92);
   --blur-xs: 12px;
   --blur-sm: 18px;
   --blur-md: 24px;
 
-  /* Shadow */
-  --shadow: 0 10px 40px rgba(0, 0, 0, 0.35);
-  --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.45);
-  --shadow-gold: 0 10px 40px rgba(200, 167, 91, 0.12);
-  --shadow-gold-lg: 0 20px 60px rgba(200, 167, 91, 0.18);
-  --shadow-sm: 0 2px 12px rgba(0, 0, 0, 0.08);
+  /* Shadow — 只做结构分隔 */
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.08);
+  --shadow-gold: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-gold-lg: 0 4px 16px rgba(0, 0, 0, 0.08);
+  --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.04);
 
-  /* Radius — Apple-style generous */
-  --radius-xl: 24px;
-  --radius-lg: 20px;
-  --radius-md: 14px;
-  --radius-sm: 10px;
-  --radius-xs: 6px;
+  /* Radius — 硬朗工业小圆角 */
+  --radius-xl: 12px;
+  --radius-lg: 12px;
+  --radius-md: 8px;
+  --radius-sm: 4px;
+  --radius-xs: 3px;
 
   /* Layout */
-  --shell-width: 1920px;
+  --shell-width: 1320px;
 
-  /* Animation — Apple-style cubic-bezier */
-  --transition-fast: 150ms ease;
-  --transition-base: 250ms cubic-bezier(0.25, 1, 0.5, 1);
-  --transition-slow: 350ms cubic-bezier(0.25, 1, 0.5, 1);
+  /* Animation — 机械、无回弹 */
+  --transition-fast: 120ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 350ms cubic-bezier(0.4, 0, 0.2, 1);
   --transition-scene: 1.2s cubic-bezier(0.16, 1, 0.3, 1);
 
   /* Header */
-  --header-bg: rgba(9, 9, 9, 0.75);
-  --header-border: rgba(200, 167, 91, 0.18);
+  --header-bg: rgba(255, 255, 255, 0.88);
+  --header-border: rgba(154, 123, 28, 0.14);
 
-  /* Button — flat engineering controls, no marketing gradients */
-  --button-primary-text: #0D0D0F;
-  --button-primary-bg: #C8A75B;
+  /* Button — 哑光实心，无营销渐变 */
+  --button-primary-text: #FFFFFF;
+  --button-primary-bg: #9A7B1C;
   --button-secondary-bg: transparent;
-  --button-border: rgba(200, 167, 91, 0.35);
+  --button-border: rgba(154, 123, 28, 0.35);
+
+  /* Code Blocks (light) */
+  --code-inline-bg: rgba(0, 0, 0, 0.05);
+  --code-inline-color: #7E6212;
+  --code-inline-border: rgba(154, 123, 28, 0.2);
+  --code-block-bg: #F0F0F3;
+  --code-block-color: #18181B;
+  --tok-keyword: #2563eb;
+  --tok-string: #059669;
+  --tok-number: #cf222e;
+
+  /* Arch Flow (light) */
+  --arch-bg: rgba(240, 240, 243, 0.72);
+  --arch-step-bg: rgba(255, 255, 255, 0.88);
+  --arch-step-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+  --arch-flow-shadow: inset 0 0 40px rgba(0, 0, 0, 0.04);
+  --arch-status-bar-bg: rgba(154, 123, 28, 0.06);
+  --arch-status-bar-border: rgba(154, 123, 28, 0.12);
+}
+
+/* =========================================
+   Light Theme
+   ========================================= */
+[data-theme="dark"] {
+  --bg-deep: #08080A;
+  --bg: #0C0C0E;
+  --bg-soft: #121215;
+  --bg-elevated: #18181C;
+  --bg-panel: #1A1A1E;
+  --bg-surface: #1E1E22;
+
+  --text: #F4F4F6;
+  --text-soft: #C0C0C6;
+  --text-muted: #8E8E96;
+  --text-dim: #5C5C64;
+
+  /* 工业金 · 深色 */
+  --gold: #D4AF37;
+  --gold-light: #E5C158;
+  --gold-bright: #F4D06F;
+  --gold-deep: #B8961F;
+  --gold-dark: #9A7B1C;
+  --gold-hover: #E5C158;
+  --gold-glow: rgba(212, 175, 55, 0.12);
+  --gold-glow-strong: rgba(212, 175, 55, 0.20);
+  --gold-soft: rgba(212, 175, 55, 0.08);
+  --gold-bg: rgba(212, 175, 55, 0.04);
+  --gold-bg-strong: rgba(212, 175, 55, 0.06);
+  --gold-border: rgba(212, 175, 55, 0.22);
+  --gold-border-hover: rgba(229, 193, 88, 0.45);
+  --gold-line: rgba(212, 175, 55, 0.12);
+  --gold-ghost: rgba(212, 175, 55, 0.035);
+  --gold-ghost-strong: rgba(212, 175, 55, 0.05);
+  --gold-selection: rgba(212, 175, 55, 0.25);
+
+  /* Semantic */
+  --success: #3FB950;
+  --warning: #D4AF37;
+  --error: #F85149;
+  --tip: #58A6FF;
+  --success-bg: rgba(63, 185, 80, 0.10);
+  --success-border: rgba(63, 185, 80, 0.26);
+  --success-glow: rgba(63, 185, 80, 0.40);
+  --error-bg: rgba(248, 81, 73, 0.10);
+  --error-border: rgba(248, 81, 73, 0.26);
+  --error-soft: rgba(248, 81, 73, 0.06);
+  --tip-bg: rgba(88, 166, 255, 0.10);
+  --tip-border: rgba(88, 166, 255, 0.26);
+  --tip-soft: rgba(88, 166, 255, 0.06);
+
+  --glass: rgba(26, 26, 30, 0.82);
+  --glass-strong: rgba(22, 24, 27, 0.88);
+
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.40);
+  --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.45);
+  --shadow-gold: 0 1px 2px rgba(0, 0, 0, 0.40);
+  --shadow-gold-lg: 0 4px 16px rgba(0, 0, 0, 0.45);
+  --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.30);
+
+  --header-bg: rgba(12, 12, 14, 0.88);
+  --header-border: rgba(212, 175, 55, 0.18);
+
+  --button-primary-text: #0C0C0E;
+  --button-primary-bg: #D4AF37;
+  --button-secondary-bg: transparent;
+  --button-border: rgba(212, 175, 55, 0.35);
 
   /* Code Blocks (dark) */
-  --code-inline-bg: rgba(28, 29, 32, 0.8);
-  --code-inline-color: #E8D5A3;
-  --code-inline-border: rgba(200, 167, 91, 0.15);
-  --code-block-bg: #111111;
+  --code-inline-bg: rgba(255, 255, 255, 0.05);
+  --code-inline-color: #F4D06F;
+  --code-inline-border: rgba(212, 175, 55, 0.18);
+  --code-block-bg: #111114;
   --code-block-color: #D7D7D7;
   --tok-keyword: #7dd3fc;
   --tok-string: #86efac;
@@ -106,94 +194,9 @@
   --arch-bg: rgba(12, 13, 15, 0.72);
   --arch-step-bg: rgba(22, 23, 26, 0.85);
   --arch-step-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
-  --arch-flow-shadow: inset 0 0 40px rgba(0, 0, 0, 0.35), 0 0 24px rgba(200, 167, 91, 0.06);
-  --arch-status-bar-bg: rgba(200, 167, 91, 0.08);
-  --arch-status-bar-border: rgba(200, 167, 91, 0.12);
-}
-
-/* =========================================
-   Light Theme
-   ========================================= */
-[data-theme="light"] {
-  --bg-deep: #F5F5F7;
-  --bg: #FAFAFA;
-  --bg-soft: #F0F0F2;
-  --bg-elevated: #E8E8ED;
-  --bg-panel: #FFFFFF;
-  --bg-surface: #FBFBFD;
-
-  --text: #1D1D1F;
-  --text-soft: #3A3A3C;
-  --text-muted: #6E6E73;
-  --text-dim: #999999;
-
-  --gold: #B8933F;
-  --gold-light: #A07D2C;
-  --gold-bright: #C8A75B;
-  --gold-deep: #8B6914;
-  --gold-dark: #6B5210;
-  --gold-hover: #D4A84B;
-  --gold-glow: rgba(184, 147, 63, 0.15);
-  --gold-glow-strong: rgba(184, 147, 63, 0.3);
-  --gold-soft: rgba(184, 147, 63, 0.08);
-  --gold-bg: rgba(184, 147, 63, 0.05);
-  --gold-bg-strong: rgba(184, 147, 63, 0.07);
-  --gold-border: rgba(184, 147, 63, 0.2);
-  --gold-border-hover: rgba(160, 125, 44, 0.45);
-  --gold-line: rgba(184, 147, 63, 0.12);
-  --gold-ghost: rgba(184, 147, 63, 0.03);
-  --gold-ghost-strong: rgba(184, 147, 63, 0.05);
-  --gold-selection: rgba(184, 147, 63, 0.3);
-
-  /* Semantic */
-  --success: #16a34a;
-  --warning: #B8933F;
-  --error: #dc2626;
-  --tip: #3b82f6;
-  --success-bg: rgba(22, 163, 74, 0.1);
-  --success-border: rgba(22, 163, 74, 0.25);
-  --success-glow: rgba(22, 163, 74, 0.45);
-  --error-bg: rgba(220, 38, 38, 0.1);
-  --error-border: rgba(220, 38, 38, 0.25);
-  --error-soft: rgba(220, 38, 38, 0.05);
-  --tip-bg: rgba(59, 130, 246, 0.1);
-  --tip-border: rgba(59, 130, 246, 0.25);
-  --tip-soft: rgba(59, 130, 246, 0.05);
-
-  --glass: rgba(255, 255, 255, 0.55);
-  --glass-strong: rgba(255, 255, 255, 0.85);
-
-  --shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 8px 40px rgba(0, 0, 0, 0.10);
-  --shadow-gold: 0 4px 24px rgba(184, 147, 63, 0.08);
-  --shadow-gold-lg: 0 8px 40px rgba(184, 147, 63, 0.12);
-  --shadow-sm: 0 1px 6px rgba(0, 0, 0, 0.04);
-
-  --header-bg: rgba(245, 245, 247, 0.75);
-  --header-border: rgba(184, 147, 63, 0.15);
-
-  --button-primary-text: #FFFFFF;
-  --button-primary-bg: #B8933F;
-  --button-secondary-bg: transparent;
-  --button-border: rgba(184, 147, 63, 0.4);
-
-  /* Code Blocks (light) */
-  --code-inline-bg: rgba(0, 0, 0, 0.06);
-  --code-inline-color: #8B6914;
-  --code-inline-border: rgba(184, 147, 63, 0.2);
-  --code-block-bg: #F0F0F3;
-  --code-block-color: #1D1D1F;
-  --tok-keyword: #2563eb;
-  --tok-string: #059669;
-  --tok-number: #dc2626;
-
-  /* Arch Flow (light) */
-  --arch-bg: rgba(240, 240, 243, 0.72);
-  --arch-step-bg: rgba(255, 255, 255, 0.88);
-  --arch-step-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
-  --arch-flow-shadow: inset 0 0 40px rgba(0, 0, 0, 0.04), 0 0 24px rgba(184, 147, 63, 0.06);
-  --arch-status-bar-bg: rgba(184, 147, 63, 0.08);
-  --arch-status-bar-border: rgba(184, 147, 63, 0.12);
+  --arch-flow-shadow: inset 0 0 40px rgba(0, 0, 0, 0.35);
+  --arch-status-bar-bg: rgba(212, 175, 55, 0.06);
+  --arch-status-bar-border: rgba(212, 175, 55, 0.12);
 }
 
 
@@ -245,7 +248,7 @@ body {
   overflow-x: hidden;
 }
 
-/* Industrial console background — subtle grid instead of aurora */
+/* Industrial console background — 精确工程网格，无光晕 */
 body::before {
   content: "";
   position: fixed;
@@ -254,20 +257,11 @@ body::before {
   z-index: -2;
   pointer-events: none;
   background-image:
-    linear-gradient(var(--gold-ghost) 1px, transparent 1px),
-    linear-gradient(90deg, var(--gold-ghost) 1px, transparent 1px);
-  background-size: 48px 48px;
+    linear-gradient(var(--gold-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--gold-line) 1px, transparent 1px);
+  background-size: 64px 64px;
   background-attachment: fixed;
-}
-
-body::after {
-  content: "";
-  position: fixed;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  z-index: -1;
-  pointer-events: none;
-  background: radial-gradient(ellipse 60% 30% at 50% 0%, var(--gold-ghost) 0%, transparent 60%);
+  opacity: 0.5;
 }
 
 a {
@@ -382,15 +376,13 @@ code, pre { font-family: "JetBrains Mono", "SF Mono", "Fira Code", Consolas, mon
    Markdown body (document pages)
    ========================================= */
 .markdown-body {
-  padding: clamp(32px, 4vw, 52px);
+  padding: clamp(28px, 4vw, 48px);
   border-radius: var(--radius-lg);
-  background: var(--glass);
-  backdrop-filter: var(--blur-xs);
-  -webkit-backdrop-filter: var(--blur-xs);
+  background: var(--bg-surface);
   border: 1px solid var(--gold-border);
   box-shadow: var(--shadow);
-  line-height: 1.9;
-  font-size: 1.02rem;
+  line-height: 1.8;
+  font-size: 1rem;
 }
 
 .markdown-body h1, .markdown-body h2, .markdown-body h3, .markdown-body h4 {
@@ -400,7 +392,12 @@ code, pre { font-family: "JetBrains Mono", "SF Mono", "Fira Code", Consolas, mon
   letter-spacing: -0.01em;
 }
 
-.markdown-body h1 { margin-top: 0; font-size: clamp(1.8rem, 2.4vw, 2.6rem); }
+.markdown-body h1 {
+  margin-top: 0;
+  padding-bottom: 0.4em;
+  border-bottom: 1px solid var(--gold-line);
+  font-size: clamp(1.8rem, 2.4vw, 2.6rem);
+}
 .markdown-body h2 { margin-top: 2.2em; padding-bottom: 0.5em; border-bottom: 1px solid var(--gold-border); font-size: 1.6rem; }
 .markdown-body h3 { margin-top: 1.6em; font-size: 1.25rem; color: var(--text-soft); }
 
@@ -416,12 +413,13 @@ code, pre { font-family: "JetBrains Mono", "SF Mono", "Fira Code", Consolas, mon
 }
 
 .markdown-body a {
-  color: var(--gold-light);
-  border-bottom: 1px solid transparent;
-  transition: var(--transition-fast);
+  color: var(--gold);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: color var(--transition-fast);
 }
 
-.markdown-body a:hover { color: var(--gold-hover); border-bottom-color: var(--gold); }
+.markdown-body a:hover { color: var(--gold-light); }
 
 .markdown-body table {
   width: 100%;
@@ -436,7 +434,7 @@ code, pre { font-family: "JetBrains Mono", "SF Mono", "Fira Code", Consolas, mon
 }
 
 .markdown-body thead {
-  background: linear-gradient(135deg, var(--gold-bg) 0%, var(--gold-ghost) 100%);
+  background: var(--bg-soft);
 }
 
 .markdown-body th, .markdown-body td {
@@ -448,10 +446,16 @@ code, pre { font-family: "JetBrains Mono", "SF Mono", "Fira Code", Consolas, mon
 
 .markdown-body th {
   color: var(--gold-light);
+  font-family: "JetBrains Mono", "SF Mono", "Fira Code", Consolas, monospace;
   font-weight: 600;
-  font-size: 0.9rem;
-  letter-spacing: 0.02em;
+  font-size: 0.8rem;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
+}
+
+/* 偶数行斑马纹 —— 密集数据表格的可读性 */
+.markdown-body tbody tr:nth-child(even) td {
+  background: var(--bg-soft);
 }
 
 .markdown-body tbody tr:last-child td { border-bottom: none; }
@@ -475,15 +479,6 @@ code, pre { font-family: "JetBrains Mono", "SF Mono", "Fira Code", Consolas, mon
   background: var(--code-block-bg);
   border: 1px solid var(--gold-border);
   margin: 1.5rem 0;
-}
-
-.markdown-body pre::before {
-  content: "";
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, var(--gold), var(--gold-light), transparent);
-  border-radius: var(--radius-md) var(--radius-md) 0 0;
 }
 
 .markdown-body pre code {
@@ -550,9 +545,7 @@ code, pre { font-family: "JetBrains Mono", "SF Mono", "Fira Code", Consolas, mon
   margin-bottom: 28px;
   padding: clamp(32px, 4vw, 48px);
   border-radius: var(--radius-lg);
-  background: var(--glass);
-  backdrop-filter: var(--blur-xs);
-  -webkit-backdrop-filter: var(--blur-xs);
+  background: var(--bg-surface);
   color: var(--text);
   border: 1px solid var(--gold-border);
   box-shadow: var(--shadow);
@@ -1878,9 +1871,7 @@ code, pre { font-family: "JetBrains Mono", "SF Mono", "Fira Code", Consolas, mon
   gap: 12px;
   padding: 28px;
   border-radius: var(--radius-lg);
-  background: var(--glass);
-  backdrop-filter: var(--blur-xs);
-  -webkit-backdrop-filter: var(--blur-xs);
+  background: var(--bg-surface);
   border: 1px solid var(--gold-border);
   background-image:
     linear-gradient(var(--gold-ghost-strong) 1px, transparent 1px),
@@ -1956,9 +1947,7 @@ code, pre { font-family: "JetBrains Mono", "SF Mono", "Fira Code", Consolas, mon
 
 .feature-card--capability {
   padding: 28px;
-  background: var(--glass);
-  backdrop-filter: var(--blur-xs);
-  -webkit-backdrop-filter: var(--blur-xs);
+  background: var(--bg-surface);
   border: 1px solid var(--gold-border);
   background-image:
     linear-gradient(var(--gold-ghost-strong) 1px, transparent 1px),
@@ -2288,7 +2277,7 @@ code, pre { font-family: "JetBrains Mono", "SF Mono", "Fira Code", Consolas, mon
 }
 
 .roadmap-table th {
-  background: linear-gradient(135deg, var(--gold-bg), var(--gold-ghost));
+  background: var(--bg-soft);
   color: var(--gold-light);
   text-align: left;
   padding: 12px 14px;

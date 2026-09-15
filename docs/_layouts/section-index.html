@@ -12,13 +12,8 @@
     <script>
       (function () {
         var stored = localStorage.getItem('edgeCore-docs-theme');
-        var theme;
-        if (stored) {
-          theme = stored === 'light' ? 'light' : 'dark';
-        } else {
-          var h = new Date().getHours();
-          theme = (h >= 6 && h < 18) ? 'light' : 'dark';
-        }
+        // 默认明亮主题（Light First），仅在用户显式选择 dark 时切换
+        var theme = stored === 'dark' ? 'dark' : 'light';
         document.documentElement.setAttribute('data-theme', theme);
       })();
     </script>

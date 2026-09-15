@@ -1,0 +1,736 @@
+/* ============================================================
+   landing.css — edgeCore 首页（Industrial Console）
+   设计约束：克制 · 冷酷 · 精确 —— 无发光、无毛玻璃、无弹性动效
+   层次只由排版、字重、边框与背景分层建立。
+   作用域：body.page-home（仅首页，不污染其他文档页）
+   ============================================================ */
+
+/* Token 继承全站 style.css（默认明亮 / [data-theme="dark"] 深色），
+   此处不重复定义颜色与几何，避免两套 token 漂移。 */
+
+/* ------------------------------------------------------------
+   Hero
+   ------------------------------------------------------------ */
+.lp-hero {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: 72px 40px 0;
+  border: 1px solid var(--gold-line);
+  border-radius: var(--radius-lg);
+  background: var(--bg-deep);
+}
+
+/* 蓝图网格 —— 极弱，仅提供工程底纹 */
+.lp-hero__grid {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-image:
+    linear-gradient(to right, var(--gold-line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--gold-line) 1px, transparent 1px);
+  background-size: 64px 64px;
+  opacity: 0.5;
+  mask-image: radial-gradient(90% 70% at 50% 30%, #000 35%, transparent 100%);
+  -webkit-mask-image: radial-gradient(90% 70% at 50% 30%, #000 35%, transparent 100%);
+}
+
+/* 左侧工程刻度尺 */
+.lp-hero__ruler {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 20px;
+  border-right: 1px solid var(--gold-line);
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent 15px,
+    var(--gold-border) 15px,
+    var(--gold-border) 16px
+  );
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+/* 右下角铭牌 */
+.lp-hero__watermark {
+  position: absolute;
+  right: 20px;
+  bottom: 12px;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  pointer-events: none;
+}
+
+/* HUD 状态读数 */
+.lp-hud {
+  position: absolute;
+  top: 20px;
+  right: 24px;
+  display: flex;
+  gap: 16px;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.lp-hud__row { display: flex; align-items: center; gap: 6px; }
+.lp-hud__label { color: var(--text-dim); }
+.lp-hud__val { color: var(--text-soft); font-weight: 600; }
+.lp-hud__val--ok { color: var(--success); }
+.lp-hud__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--success);
+  box-shadow: 0 0 6px var(--success-glow);
+  animation: lp-blink 2s steps(1, end) infinite;
+}
+@keyframes lp-blink { 0%, 60% { opacity: 1; } 61%, 100% { opacity: 0.3; } }
+
+.lp-hero__inner {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 56px;
+  align-items: center;
+  padding-left: 16px;
+}
+
+/* 状态标签 —— 实线边框，等宽字 */
+.lp-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 11px;
+  border: 1px solid var(--gold-border);
+  border-radius: var(--radius-sm);
+  background: var(--gold-bg);
+  color: var(--gold-light);
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.lp-chip__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--success);
+  box-shadow: 0 0 6px var(--success-glow);
+  animation: lp-blink 2s steps(1, end) infinite;
+}
+
+.lp-hero__title {
+  margin: 22px 0 0;
+  font-family: 'Outfit', system-ui, sans-serif;
+  font-size: clamp(34px, 4.6vw, 60px);
+  font-weight: 800;
+  line-height: 1.06;
+  letter-spacing: -0.03em;
+  color: var(--text);
+}
+.lp-hero__title em {
+  font-style: normal;
+  color: var(--gold);
+}
+
+.lp-hero__sub {
+  margin: 14px 0 0;
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--text-soft);
+}
+
+.lp-hero__desc {
+  margin: 18px 0 0;
+  max-width: 620px;
+  font-size: 14px;
+  line-height: 1.8;
+  color: var(--text-muted);
+}
+
+/* 打字机 */
+.lp-hero .hero-typewriter {
+  margin-top: 16px;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 12.5px;
+  color: var(--gold-light);
+  min-height: 20px;
+}
+.lp-hero .typewriter-cursor { color: var(--gold); }
+
+/* ------------------------------------------------------------
+   终端风格安装命令
+   ------------------------------------------------------------ */
+.lp-install {
+  margin-top: 28px;
+  max-width: 620px;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  border: 1px solid var(--gold-border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-soft);
+  overflow: hidden;
+}
+.lp-install__prompt {
+  padding: 11px 12px;
+  border-right: 1px solid var(--gold-line);
+  color: var(--success);
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 12.5px;
+  font-weight: 600;
+  user-select: none;
+}
+.lp-install__cmd {
+  flex: 1;
+  min-width: 0;
+  padding: 11px 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 12.5px;
+  color: var(--text-soft);
+}
+.lp-copy {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 11px 14px;
+  border: none;
+  border-left: 1px solid var(--gold-line);
+  background: transparent;
+  color: var(--gold-light);
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+.lp-copy:hover { background: var(--gold-bg-strong); color: var(--gold-bright); }
+.lp-copy.is-copied { background: var(--success-bg); color: var(--success); }
+.lp-copy svg { width: 13px; height: 13px; }
+
+/* ------------------------------------------------------------
+   动作按钮 —— 哑光实心，无渐变
+   ------------------------------------------------------------ */
+.lp-actions { margin-top: 26px; display: flex; flex-wrap: wrap; gap: 10px; }
+.lp-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 42px;
+  padding: 0 22px;
+  border-radius: var(--radius-sm);
+  font-size: 13.5px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  text-decoration: none;
+  border: 1px solid transparent;
+  transition: background var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast);
+}
+.lp-btn--primary {
+  background: var(--gold);
+  border-color: var(--gold);
+  color: #0c0c0e;
+}
+.lp-btn--primary:hover { background: var(--gold-light); border-color: var(--gold-light); }
+.lp-btn--ghost {
+  background: var(--bg-surface);
+  border-color: var(--gold-border);
+  color: var(--text-soft);
+}
+.lp-btn--ghost:hover {
+  background: var(--gold-bg);
+  border-color: var(--gold-border-hover);
+  color: var(--gold-light);
+}
+.lp-btn__arrow { transition: transform var(--transition-fast); }
+.lp-btn:hover .lp-btn__arrow { transform: translateX(3px); }
+
+/* ------------------------------------------------------------
+   指标条 —— 边框分隔，等宽数值
+   ------------------------------------------------------------ */
+.lp-stats {
+  position: relative;
+  z-index: 2;
+  margin-top: 60px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border-top: 1px solid var(--gold-line);
+}
+.lp-stat {
+  padding: 20px 24px 24px;
+  border-left: 1px solid var(--gold-line);
+}
+.lp-stat:first-child { border-left: none; }
+.lp-stat__value {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--text);
+  line-height: 1.1;
+}
+.lp-stat__value em { font-style: normal; color: var(--gold); }
+.lp-stat__label {
+  margin-top: 6px;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--text-dim);
+}
+
+/* Hero 右侧粒子（script.js 契约，容器固定 320×320） */
+.lp-hero .hero-visual,
+.lp-hero__visual {
+  width: 320px;
+  height: 320px;
+  min-height: 320px;
+  margin: 0 auto;
+}
+
+/* ------------------------------------------------------------
+   通用区块
+   ------------------------------------------------------------ */
+.lp-section {
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: 64px 40px 0;
+}
+.lp-section__head { max-width: 720px; margin-bottom: 28px; }
+.lp-kicker {
+  display: block;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+.lp-section__title {
+  margin: 10px 0 0;
+  font-family: 'Outfit', system-ui, sans-serif;
+  font-size: clamp(22px, 2.6vw, 30px);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  line-height: 1.25;
+}
+.lp-section__body {
+  margin: 12px 0 0;
+  font-size: 13.5px;
+  line-height: 1.8;
+  color: var(--text-muted);
+}
+
+/* ------------------------------------------------------------
+   数据流向
+   ------------------------------------------------------------ */
+.lp-flow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 48px minmax(0, 1.05fr) 48px minmax(0, 1fr);
+  align-items: stretch;
+}
+.lp-node {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 22px 22px 20px;
+  border: 1px solid var(--gold-border);
+  border-radius: var(--radius-lg);
+  background: var(--bg-panel);
+  transition: border-color var(--transition-fast), background var(--transition-fast);
+}
+.lp-node:hover { border-color: var(--gold-border-hover); background: var(--bg-surface); }
+.lp-node--core {
+  background: var(--gold-bg);
+  border-color: var(--gold-border-hover);
+}
+.lp-node__icon {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--gold-border);
+  border-radius: var(--radius-sm);
+  background: var(--gold-bg-strong);
+  color: var(--gold-light);
+  margin-bottom: 14px;
+}
+.lp-node--core .lp-node__icon {
+  background: var(--gold);
+  border-color: var(--gold);
+  color: #0c0c0e;
+}
+.lp-node__icon svg { width: 17px; height: 17px; }
+.lp-node__tag {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+.lp-node__title {
+  margin: 7px 0 0;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text);
+}
+.lp-node__desc {
+  margin: 8px 0 0;
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: var(--text-muted);
+}
+.lp-node__list {
+  margin: 15px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 6px;
+}
+.lp-node__list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 11.5px;
+  color: var(--text-soft);
+}
+.lp-node__list li::before {
+  content: '';
+  flex: none;
+  width: 4px;
+  height: 4px;
+  background: var(--gold);
+}
+
+/* 连接线 —— 细实线 + 低调移动点，无辉光 */
+.lp-link {
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+.lp-link::before {
+  content: '';
+  width: 100%;
+  height: 1px;
+  background: var(--gold-border);
+}
+.lp-link::after {
+  content: '';
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: var(--gold-bright);
+  animation: lp-flowdot 3s linear infinite;
+}
+.lp-link--r::after { animation-delay: 0.75s; }
+@keyframes lp-flowdot {
+  0%, 100% { transform: translateX(-18px); opacity: 0; }
+  20%      { opacity: 1; }
+  80%      { opacity: 1; }
+}
+
+/* AI 旁路 */
+.lp-flow__ai {
+  margin-top: 14px;
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px 20px;
+  border: 1px solid var(--gold-line);
+  border-radius: var(--radius-md);
+  background: var(--gold-bg);
+}
+.lp-flow__ai > svg { width: 16px; height: 16px; flex: none; margin-top: 2px; color: var(--gold); }
+.lp-flow__ai p { margin: 0; font-size: 12.5px; line-height: 1.75; color: var(--text-muted); }
+.lp-flow__ai strong { color: var(--text); font-weight: 600; }
+.lp-flow__ai code {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 11.5px;
+  color: var(--gold-light);
+}
+.lp-flow__ai a { color: var(--gold); text-decoration: none; }
+.lp-flow__ai a:hover { text-decoration: underline; }
+
+/* ------------------------------------------------------------
+   Bento 模块 —— 编号登记式，无装饰水印
+   ------------------------------------------------------------ */
+.lp-bento {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 16px;
+}
+.lp-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 22px 22px 20px;
+  border: 1px solid var(--gold-border);
+  border-radius: var(--radius-lg);
+  background: var(--bg-panel);
+  transition: border-color var(--transition-fast), background var(--transition-fast);
+}
+.lp-card:hover { border-color: var(--gold-border-hover); background: var(--bg-surface); }
+.lp-card--half { grid-column: span 3; }
+.lp-card--third { grid-column: span 2; }
+.lp-card--accent { background: var(--gold-bg); border-color: var(--gold-border-hover); }
+
+.lp-card__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.lp-card__idx {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: var(--gold);
+}
+.lp-card__tag {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 9.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: var(--radius-sm);
+  background: var(--gold-soft);
+  color: var(--gold-light);
+}
+.lp-card__icon {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--gold-border);
+  border-radius: var(--radius-sm);
+  background: var(--gold-bg-strong);
+  color: var(--gold-light);
+  margin-bottom: 14px;
+}
+.lp-card__icon svg { width: 17px; height: 17px; }
+.lp-card__title {
+  margin: 0;
+  font-size: 15.5px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text);
+}
+.lp-card__desc {
+  margin: 9px 0 0;
+  font-size: 13px;
+  line-height: 1.75;
+  color: var(--text-muted);
+}
+.lp-card__desc code {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 11.5px;
+  color: var(--gold-light);
+}
+.lp-card__foot {
+  margin-top: auto;
+  padding-top: 14px;
+  border-top: 1px solid var(--gold-line);
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+.lp-card__foot a { color: var(--gold); text-decoration: none; }
+.lp-card__foot a:hover { text-decoration: underline; }
+
+.lp-card__metrics {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.lp-card__metric span {
+  display: block;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--text);
+}
+.lp-card__metric small {
+  display: block;
+  margin-top: 2px;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+/* ------------------------------------------------------------
+   协议矩阵 —— 终端标签
+   ------------------------------------------------------------ */
+.lp-proto { display: flex; flex-wrap: wrap; gap: 8px; }
+.lp-proto__item {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 7px 12px;
+  border: 1px solid var(--gold-border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface);
+  font-size: 12.5px;
+  color: var(--text-soft);
+  transition: border-color var(--transition-fast), background var(--transition-fast);
+}
+.lp-proto__item:hover { border-color: var(--gold-border-hover); background: var(--gold-bg); }
+.lp-proto__item code {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 10.5px;
+  color: var(--gold);
+}
+.lp-proto__note {
+  margin-top: 14px;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 11.5px;
+  color: var(--text-dim);
+}
+.lp-section__body code { color: var(--gold); }
+.lp-section__body a { color: var(--gold); text-decoration: none; }
+.lp-section__body a:hover { text-decoration: underline; }
+
+/* ------------------------------------------------------------
+   文档导航
+   ------------------------------------------------------------ */
+.lp-docs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+.lp-doc {
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  border: 1px solid var(--gold-border);
+  border-radius: var(--radius-md);
+  background: var(--bg-panel);
+  text-decoration: none;
+  transition: border-color var(--transition-fast), background var(--transition-fast);
+}
+.lp-doc:hover { border-color: var(--gold-border-hover); background: var(--bg-surface); }
+.lp-doc__idx {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  color: var(--gold);
+}
+.lp-doc__label {
+  margin-top: 12px;
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--text);
+}
+.lp-doc__desc {
+  margin-top: 6px;
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--text-muted);
+}
+.lp-doc__go {
+  margin-top: 14px;
+  font-size: 12px;
+  color: var(--gold);
+  transition: transform var(--transition-fast);
+}
+.lp-doc:hover .lp-doc__go { transform: translateX(3px); }
+
+/* ------------------------------------------------------------
+   CTA —— 纯边框容器，无光晕
+   ------------------------------------------------------------ */
+.lp-cta {
+  max-width: 1360px;
+  margin: 64px auto 0;
+  padding: 48px 40px;
+  border: 1px solid var(--gold-border);
+  border-radius: var(--radius-lg);
+  background: var(--bg-panel);
+  text-align: center;
+}
+.lp-cta__title {
+  margin: 0;
+  font-family: 'Outfit', system-ui, sans-serif;
+  font-size: clamp(21px, 2.6vw, 28px);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+.lp-cta__desc {
+  margin: 12px auto 0;
+  max-width: 560px;
+  font-size: 13.5px;
+  line-height: 1.8;
+  color: var(--text-muted);
+}
+.lp-cta .lp-actions { justify-content: center; }
+
+/* ------------------------------------------------------------
+   响应式
+   ------------------------------------------------------------ */
+@media (max-width: 1080px) {
+  .lp-hero { padding: 56px 24px 0; }
+  .lp-hero__inner { grid-template-columns: minmax(0, 1fr); gap: 24px; padding-left: 8px; }
+  /* 粒子容器为固定 320px，窄屏隐藏以免溢出裁切 */
+  .lp-hero__visual, .lp-hero .hero-visual { display: none; }
+  .lp-hud { display: none; }
+  .lp-section { padding: 56px 24px 0; }
+  .lp-flow { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .lp-link { height: 30px; }
+  .lp-link::before { width: 1px; height: 100%; background: var(--gold-border); }
+  .lp-link::after { animation: lp-flowdot-v 3s linear infinite; }
+  .lp-link--r::after { animation-delay: 0.75s; }
+  @keyframes lp-flowdot-v {
+    0%, 100% { transform: translateY(-12px); opacity: 0; }
+    20%      { opacity: 1; }
+    80%      { opacity: 1; }
+  }
+  .lp-bento { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .lp-card--half { grid-column: span 4; }
+  .lp-card--third { grid-column: span 2; }
+  .lp-docs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .lp-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .lp-stat { border-top: 1px solid var(--gold-line); }
+  .lp-stat:first-child, .lp-stat:nth-child(3) { border-left: none; }
+}
+
+@media (max-width: 720px) {
+  .lp-hero { padding: 44px 18px 0; }
+  .lp-hero__ruler { display: none; }
+  .lp-install { flex-wrap: wrap; }
+  .lp-install__prompt { border-right: none; }
+  .lp-install__cmd { white-space: normal; word-break: break-all; }
+  .lp-copy { border-left: none; border-top: 1px solid var(--gold-line); width: 100%; justify-content: center; }
+  .lp-bento { grid-template-columns: minmax(0, 1fr); }
+  .lp-card--half, .lp-card--third { grid-column: span 1; }
+  .lp-docs { grid-template-columns: minmax(0, 1fr); }
+  .lp-section { padding: 44px 18px 0; }
+  .lp-cta { padding: 36px 18px; }
+  .lp-stats { grid-template-columns: minmax(0, 1fr); }
+  .lp-stat { border-left: none; }
+}
+
+/* 降低动效偏好 */
+@media (prefers-reduced-motion: reduce) {
+  .lp-link::after, .lp-chip__dot, .lp-hud__dot { animation: none; }
+}

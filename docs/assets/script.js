@@ -498,7 +498,7 @@ function initThemeToggle() {
     if (button) button.setAttribute('aria-pressed', String(theme === 'light'));
   }
 
-  var current = root.getAttribute('data-theme') || 'dark';
+  var current = root.getAttribute('data-theme') || 'light';
   syncTheme(current);
 
   if (button) {

@@ -9,16 +9,12 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Noto+Sans+SC:wght@400;500;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ '/assets/style.css' | relative_url }}">
+    <link rel="stylesheet" href="{{ '/assets/landing.css' | relative_url }}">
     <script>
       (function () {
         var stored = localStorage.getItem('edgeCore-docs-theme');
-        var theme;
-        if (stored) {
-          theme = stored === 'light' ? 'light' : 'dark';
-        } else {
-          var h = new Date().getHours();
-          theme = (h >= 6 && h < 18) ? 'light' : 'dark';
-        }
+        // 默认明亮主题（Light First），仅在用户显式选择 dark 时切换
+        var theme = stored === 'dark' ? 'dark' : 'light';
         document.documentElement.setAttribute('data-theme', theme);
       })();
     </script>
@@ -63,7 +59,7 @@
         <span class="site-footer__divider">|</span>
         <a href="https://github.com/anviod/edgeCore" target="_blank" rel="noopener noreferrer">GitHub</a>
         <span class="site-footer__divider">|</span>
-        <span class="site-footer__copy">开源 · MIT 许可证</span>
+        <span class="site-footer__copy">开源 · GPL-3.0 许可证</span>
       </div>
     </footer>
 
