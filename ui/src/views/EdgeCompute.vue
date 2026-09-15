@@ -612,7 +612,7 @@
     &quot;actions&quot;: [{&quot;type&quot;: &quot;mqtt&quot;, &quot;topic&quot;: &quot;alarm&quot;, &quot;payload&quot;: &quot;温度过高&quot;}]
   }
 ]"
-            :rows="12"
+            :auto-size="{ minRows: 18, maxRows: 26 }"
             class="code-input rect-input"
             @input="onJsonInputChange"
           />

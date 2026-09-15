@@ -17,16 +17,15 @@
       <a-tab-pane key="basic">
         <template #title>连接配置</template>
         <a-form :model="form" layout="vertical" class="industrial-form form-controls-md">
-          <a-row :gutter="16">
-            <a-col :span="16">
-              <a-form-item label="通道名称" required>
-                <a-input v-model="form.name" placeholder="例如: edgeOS MQTT 生产通道" />
-              </a-form-item>
-            </a-col>
-            <a-col :span="8">
-              <a-form-item label="启用"><a-switch v-model="form.enable" /></a-form-item>
-            </a-col>
-          </a-row>
+          <!-- 通道名称 + 启用 -->
+          <div class="nb-channel-header">
+            <a-form-item label="通道名称" required class="nb-channel-name-item">
+              <a-input v-model="form.name" placeholder="例如: edgeOS MQTT 生产通道" />
+            </a-form-item>
+            <a-form-item label="启用" class="nb-enable-item">
+              <a-switch v-model="form.enable" />
+            </a-form-item>
+          </div>
 
           <div class="nb-form-section">
             <div class="nb-form-section__title">Broker 连接</div>
@@ -115,26 +114,74 @@
       <!-- EAN 2.0 能力层 / EAN Capability Layer -->
       <a-tab-pane key="ean">
         <template #title>EAN 能力层</template>
-        <a-form :model="form" layout="vertical" class="industrial-form form-controls-md">
-          <div class="nb-form-section">
-            <div class="nb-form-section__title">EAN 2.0 能力层</div>
-            <!-- EAN 启用开关 / EAN Enable Switch -->
-            <a-form-item label="启用 EAN 能力层">
-              <a-switch v-model="form.ean_enabled" />
-              <div class="form-hint">启用后此通道将承载 EAN 2.0 Agent 注册、能力发现和远程调用</div>
-            </a-form-item>
-            <!-- 心跳间隔 / Heartbeat Interval -->
-            <a-form-item label="心跳间隔 (秒)">
-              <a-input-number v-model="form.ean_heartbeat_sec" :min="10" :max="600" :step="10" style="width:180px" />
-              <div class="form-hint">Agent 向 EdgeOS 发送心跳的间隔，默认 60 秒</div>
-            </a-form-item>
-            <!-- 事件自动发布 / Event Auto Publish -->
-            <a-form-item label="事件自动发布">
-              <a-switch v-model="form.ean_event_auto_publish" />
-              <div class="form-hint">设备数据变化时自动发布 EAN Event</div>
-            </a-form-item>
+        <div class="ean-capability-panel">
+          <!-- 页头 -->
+          <div class="ean-panel-header">
+            <div class="ean-panel-header__icon">
+              <icon-robot />
+            </div>
+            <div class="ean-panel-header__meta">
+              <div class="ean-panel-header__title">EAN 2.0 能力层</div>
+              <div class="ean-panel-header__sub">Edge Agent Network · 基于此通道承载 Agent 通信</div>
+            </div>
+            <a-tag :color="form.ean_enabled ? 'green' : 'gray'" size="small" class="ean-panel-header__badge">
+              {{ form.ean_enabled ? '已启用' : '未启用' }}
+            </a-tag>
           </div>
-        </a-form>
+
+          <!-- 配置卡片列表 -->
+          <div class="ean-config-cards">
+            <!-- 卡片 1：启用开关 -->
+            <div class="ean-config-card" :class="{ 'is-active': form.ean_enabled }">
+              <div class="ean-config-card__left">
+                <div class="ean-config-card__icon ean-icon--enable">
+                  <icon-thunderbolt />
+                </div>
+                <div class="ean-config-card__text">
+                  <div class="ean-config-card__label">启用 EAN 能力层</div>
+                  <div class="ean-config-card__desc">启用后此通道将承载 EAN 2.0 Agent 注册、能力发现和远程调用</div>
+                </div>
+              </div>
+              <a-switch v-model="form.ean_enabled" />
+            </div>
+
+            <!-- 卡片 2：心跳间隔 -->
+            <div class="ean-config-card" :class="{ 'is-disabled': !form.ean_enabled }">
+              <div class="ean-config-card__left">
+                <div class="ean-config-card__icon ean-icon--heartbeat">
+                  <icon-pulse />
+                </div>
+                <div class="ean-config-card__text">
+                  <div class="ean-config-card__label">心跳间隔</div>
+                  <div class="ean-config-card__desc">Agent 向 EdgeOS 发送心跳的间隔，默认 60 秒</div>
+                </div>
+              </div>
+              <div class="ean-config-card__control">
+                <a-input-number
+                  v-model="form.ean_heartbeat_sec"
+                  :min="10" :max="600" :step="10"
+                  :disabled="!form.ean_enabled"
+                  style="width: 96px"
+                />
+                <span class="ean-unit">秒</span>
+              </div>
+            </div>
+
+            <!-- 卡片 3：事件自动发布 -->
+            <div class="ean-config-card" :class="{ 'is-disabled': !form.ean_enabled }">
+              <div class="ean-config-card__left">
+                <div class="ean-config-card__icon ean-icon--event">
+                  <icon-share-alt />
+                </div>
+                <div class="ean-config-card__text">
+                  <div class="ean-config-card__label">事件自动发布</div>
+                  <div class="ean-config-card__desc">设备数据变化时自动发布 EAN Event</div>
+                </div>
+              </div>
+              <a-switch v-model="form.ean_event_auto_publish" :disabled="!form.ean_enabled" />
+            </div>
+          </div>
+        </div>
       </a-tab-pane>
     </a-tabs>
 

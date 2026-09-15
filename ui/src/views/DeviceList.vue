@@ -707,7 +707,7 @@
       <a-empty v-else description="该设备未被任何规则引用" />
     </a-modal>
 
-    <a-modal v-model:visible="scanDialog" title="扫描设备" width="900px" @cancel="scanDialog = false" :mask-closable="false">
+    <a-modal v-model:visible="scanDialog" title="扫描设备" width="900px" @cancel="scanDialog = false" :mask-closable="false" :body-style="{ maxHeight: '70vh', overflowY: 'auto' }">
       <template #footer>
         <a-space>
           <a-button @click="scanDialog = false">取消</a-button>
@@ -717,20 +717,18 @@
         </a-space>
       </template>
       
-      <a-space direction="vertical" :size="16" fill>
-        <a-row :gutter="[24, 16]" align="center">
-          <a-col :span="12">
-            <a-space>
-              <a-button type="outline" status="primary" :loading="isScanning" :disabled="isScanning" @click="scanDevices">
-                <template #icon>
-                  <icon-scan />
-                </template>
-                开始扫描
-              </a-button>
-              <a-text v-if="isScanning" type="secondary">{{ scanStatus }}</a-text>
-            </a-space>
-          </a-col>
-        </a-row>
+      <div class="scan-modal-body">
+        <div class="scan-toolbar-row">
+          <a-space>
+            <a-button type="outline" status="primary" :loading="isScanning" :disabled="isScanning" @click="scanDevices">
+              <template #icon>
+                <icon-scan />
+              </template>
+              开始扫描
+            </a-button>
+            <a-text v-if="isScanning" type="secondary">{{ scanStatus }}</a-text>
+          </a-space>
+        </div>
         
         <a-table 
           :columns="scanColumns" 
@@ -742,6 +740,7 @@
           size="small"
           :bordered="{ cell: true }"
           :pagination="false"
+          :scroll="{ y: 'calc(70vh - 80px)' }"
         >
           <template #status="{ record }">
             <a-tag v-if="record.diff_status === 'new'" color="green">New</a-tag>
@@ -751,15 +750,10 @@
             <a-tag v-else color="gray">{{ record.status || '-' }}</a-tag>
           </template>
           <template #empty>
-            <div v-if="isScanning" class="text-center py-8">
-              <a-spin size="large" />
-              <div class="mt-4 text-gray">{{ scanStatus }}</div>
-              <div class="mt-2 text-gray text-sm">预计需要10秒左右</div>
-            </div>
-            <a-empty v-else description="暂无扫描结果" />
+            <a-empty description="暂无扫描结果" />
           </template>
         </a-table>
-      </a-space>
+      </div>
     </a-modal>
   </div>
 </template>
@@ -1510,12 +1504,6 @@ const scanDevices = async () => {
   selectedScanDevices.value = []
   scanStatus.value = '正在准备扫描...'
   
-  let stopMessage = null
-  stopMessage = Message.loading({
-    content: '开始扫描设备，广播 WhoIs 发现所有 BACnet 设备...',
-    duration: 0
-  })
-  
   const startTime = Date.now()
   
   if (scanTimeout.value) {
@@ -1538,7 +1526,6 @@ const scanDevices = async () => {
   try {
     console.log('开始扫描设备，channelId:', channelId)
     
-    // Yabe 风格：后端绑定 0.0.0.0:47808 全网卡广播，无需前端传参
     const scanParams = {}
     if (channelProtocol.value === 'opc-ua') {
       const ep = channelOpcUaEndpoint.value
@@ -1556,20 +1543,12 @@ const scanDevices = async () => {
     
     scanResults.value = normalizeScanResults(res)
     selectedScanDevices.value = []
-    if (stopMessage && typeof stopMessage === 'object' && typeof stopMessage.close === 'function') {
-      stopMessage.close()
-      stopMessage = null
-    }
     Message.success({
-      content: `扫描完成 (耗时 ${scanTime} 秒)，发现 ${scanResults.value.length} 个设备，查看结果`,
-      duration: 3000
+      content: `扫描完成 (耗时 ${scanTime} 秒)，发现 ${scanResults.value.length} 个设备`,
+      duration: 2500
     })
   } catch (e) {
     console.error('扫描失败:', e)
-    if (stopMessage && typeof stopMessage === 'object' && typeof stopMessage.close === 'function') {
-      stopMessage.close()
-      stopMessage = null
-    }
     if (e.code === 'ECONNABORTED') {
       Message.error({
         content: '扫描超时，请检查网络连接或设备响应',
@@ -1585,10 +1564,6 @@ const scanDevices = async () => {
     if (scanTimeout.value) {
       clearInterval(scanTimeout.value)
       scanTimeout.value = null
-    }
-    if (stopMessage && typeof stopMessage === 'object' && typeof stopMessage.close === 'function') {
-      stopMessage.close()
-      stopMessage = null
     }
     isScanning.value = false
     scanStatus.value = ''
@@ -1672,22 +1647,22 @@ const rowSelection = reactive({
 const scanColumns = computed(() => {
   if (channelProtocol.value === 'opc-ua') {
     return [
-      { title: 'Endpoint', dataIndex: 'endpoint', width: 360 },
-      { title: '名称', dataIndex: 'name', width: 200 },
-      { title: '厂商', dataIndex: 'vendor_name', width: 200 },
-      { title: '型号', dataIndex: 'model_name', width: 150 },
-      { title: '版本', dataIndex: 'version', width: 100 },
-      { title: '状态', slotName: 'status', width: 100 },
+      { title: 'Endpoint', dataIndex: 'endpoint', width: 260, ellipsis: true },
+      { title: '名称', dataIndex: 'name', width: 140, ellipsis: true },
+      { title: '厂商', dataIndex: 'vendor_name', width: 120, ellipsis: true },
+      { title: '型号', dataIndex: 'model_name', width: 120, ellipsis: true },
+      { title: '版本', dataIndex: 'version', width: 80 },
+      { title: '状态', slotName: 'status', width: 80 },
     ]
   } else {
     return [
-      { title: 'BACnet设备ID', dataIndex: 'bacnet_device_id', width: 150 },
-      { title: 'IP 地址', dataIndex: 'ip', width: 150 },
-      { title: '端口', dataIndex: 'port', width: 100 },
-      { title: '厂商', dataIndex: 'vendor_name', width: 200 },
-      { title: '型号', dataIndex: 'model_name', width: 150 },
-      { title: '对象名称', dataIndex: 'object_name', width: 200 },
-      { title: '状态', slotName: 'status', width: 100 },
+      { title: 'BACnet设备ID', dataIndex: 'bacnet_device_id', width: 120 },
+      { title: 'IP 地址', dataIndex: 'ip', width: 120 },
+      { title: '端口', dataIndex: 'port', width: 70 },
+      { title: '厂商', dataIndex: 'vendor_name', width: 140, ellipsis: true, tooltip: true },
+      { title: '型号', dataIndex: 'model_name', width: 130, ellipsis: true, tooltip: true },
+      { title: '对象名称', dataIndex: 'object_name', width: 140, ellipsis: true, tooltip: true },
+      { title: '状态', slotName: 'status', width: 80 },
     ]
   }
 })
@@ -1709,6 +1684,12 @@ onUnmounted(() => {
 
 <style scoped>
 /* v3.0 — styles in src/styles/ */
+
+.scan-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
 
 .preconfigured-devices-section {
   margin-top: 8px;

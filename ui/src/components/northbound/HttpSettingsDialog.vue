@@ -21,16 +21,15 @@
       <a-tab-pane key="basic">
         <template #title>连接配置</template>
         <a-form :model="form" layout="vertical" class="industrial-form form-controls-md">
-          <a-row :gutter="16">
-            <a-col :span="16">
-              <a-form-item label="通道名称" required>
-                <a-input v-model="form.name" placeholder="例如: 云端生产环境 HTTP" />
-              </a-form-item>
-            </a-col>
-            <a-col :span="8">
-              <a-form-item label="启用"><a-switch v-model="form.enable" /></a-form-item>
-            </a-col>
-          </a-row>
+          <!-- 通道名称 + 启用 -->
+          <div class="nb-channel-header">
+            <a-form-item label="通道名称" required class="nb-channel-name-item">
+              <a-input v-model="form.name" placeholder="例如: 云端生产环境 HTTP" />
+            </a-form-item>
+            <a-form-item label="启用" class="nb-enable-item">
+              <a-switch v-model="form.enable" />
+            </a-form-item>
+          </div>
 
           <div class="nb-form-section">
             <div class="nb-form-section__title">目标服务器</div>
