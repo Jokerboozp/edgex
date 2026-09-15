@@ -1,26 +1,6 @@
 <template>
   <Teleport to="body">
     <template v-if="!isLoginPage">
-      <!-- FAB -->
-      <button
-        v-if="!state.expanded"
-        type="button"
-        class="ai-fab"
-        :class="{ 'mcp-glow': mcpConnected }"
-        title="打开 AI助手"
-        aria-label="打开 AI助手"
-        popovertarget="ai-assistant-hint"
-        @click="openPanel"
-      >
-        <span class="ai-fab__pulse" aria-hidden="true"></span>
-        <AiAssistantIcon />
-        <span class="ai-fab__label">AI助手</span>
-      </button>
-
-      <div id="ai-assistant-hint" popover="hint" class="ai-fab-hint">
-        AI助手 — 协议逆向 · 生产配置 · 校验 · 诊断
-      </div>
-
       <!-- Main panel -->
       <dialog
         ref="dialogRef"
@@ -260,8 +240,8 @@ const route = useRoute()
 const isLoginPage = computed(() => route.path === '/login' || route.path === '/install')
 
 const {
-  state, mcpConnected, setExpanded, setMiniMode, setWorkspace, toggleSplitMode,
-  setPosition, setSize, collapseToFab
+  state, setExpanded, setMiniMode, setWorkspace, toggleSplitMode,
+  setPosition, setSize, collapse
 } = useAiAssistant()
 
 const {
@@ -381,12 +361,12 @@ const openPanel = async () => {
 }
 
 const handleCollapse = () => {
-  collapseToFab()
+  collapse()
   dialogRef.value?.close()
 }
 
 const onDialogClose = () => {
-  if (state.value.expanded) collapseToFab()
+  if (state.value.expanded) collapse()
 }
 
 const toggleMini = () => setMiniMode(!state.value.miniMode)

@@ -67,7 +67,6 @@
               :loading="state.loading" 
               size="small" 
               class="scan-btn rescan-btn"
-              :class="{ 'is-scanning': state.loading }"
             >
               <template #icon><IconScan /></template> 重新扫描
             </a-button>
@@ -712,42 +711,14 @@ const flattenOpcNodes = (nodes, level = 0) => {
 .rescan-btn:hover:not(:disabled)::after {
   left: 140%;
 }
-/* 扫描中：呼吸 + 波纹扩散 */
-.rescan-btn.is-scanning {
-  animation: rescanPulse 1.4s ease-in-out infinite;
-}
-.rescan-btn.is-scanning::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: 8px;
-  animation: rescanRing 1.4s ease-out infinite;
-  pointer-events: none;
-}
-.rescan-btn.is-scanning .arco-icon-loading {
-  animation: rescanPulse 1.4s ease-in-out infinite;
-}
-@keyframes rescanPulse {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-1px) scale(1.02); }
-}
-@keyframes rescanRing {
-  0% { box-shadow: 0 0 0 0 rgba(14, 165, 233, 0.45); }
-  100% { box-shadow: 0 0 0 8px rgba(14, 165, 233, 0); }
-}
-/* 无障碍兜底：系统开启“减弱动态效果”时关闭所有扫描按钮动效 */
+/* 无障碍兜底：系统开启“减弱动态效果”时关闭扫描按钮动效 */
 @media (prefers-reduced-motion: reduce) {
   .rescan-btn {
     transition: none;
-    animation: none;
   }
-  .rescan-btn::after,
-  .rescan-btn::before {
+  .rescan-btn::after {
     display: none;
-    animation: none;
-  }
-  .rescan-btn.is-scanning .arco-icon-loading {
-    animation: none;
+    transition: none;
   }
 }
 

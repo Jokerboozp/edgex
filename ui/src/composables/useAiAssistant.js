@@ -2,7 +2,7 @@ import { ref, watch, onMounted, onUnmounted } from 'vue'
 
 const STORAGE_KEY = 'edgeCore-ai-assistant'
 
-// MCP 连接状态（全局共享，供顶部按钮和悬浮 FAB 使用）
+// MCP 连接状态（全局共享，供顶部入口按钮使用）
 const mcpConnected = ref(false)
 let mcpStatusTimer = null
 
@@ -71,7 +71,7 @@ const loadState = () => {
     if (raw) {
       const parsed = JSON.parse(raw)
       const merged = { ...defaultState(), ...parsed, mode: undefined }
-      // Never restore open/collapsed UI flags — always start with FAB visible
+      // Never restore open/collapsed UI flags — always start collapsed (panel controlled by top nav)
       merged.expanded = false
       merged.miniMode = false
       merged.position = clampPosition(merged.position, merged.size)
@@ -210,7 +210,7 @@ export function useAiAssistant() {
     state.value.size = { width, height }
   }
 
-  const collapseToFab = () => {
+  const collapse = () => {
     state.value.expanded = false
     state.value.miniMode = false
   }
@@ -229,7 +229,7 @@ export function useAiAssistant() {
     toggleSplitMode,
     setPosition,
     setSize,
-    collapseToFab,
+    collapse,
     getWorkspaceConfig,
     AI_WORKSPACES,
     DELIVERABLE_TYPES,
