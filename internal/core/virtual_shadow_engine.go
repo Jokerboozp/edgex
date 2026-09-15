@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/anviod/edgeCore/internal/model"
+	"go.uber.org/zap"
 
 	"github.com/expr-lang/expr"
 )
@@ -201,22 +202,54 @@ func (vse *VirtualShadowEngine) handleShadowUpdate(shadowDeviceID string, points
 		return
 	}
 
-	device, err := vse.shadowCore.GetShadowDevice(shadowDeviceID)
-	if err != nil {
-		return
+	// 空 points map = 删除事件（DeleteShadowDevice 发的 sentinel，写入路径已跳过空变更）。
+	// Empty points map = deletion sentinel from DeleteShadowDevice. Write path skips empty changes.
+	isDelete := len(points) == 0
+
+	// 从 shadow-<deviceID> 提取 raw deviceID（删除路径用）。
+	var rawDeviceID string
+	if strings.HasPrefix(shadowDeviceID, "shadow-") {
+		rawDeviceID = shadowDeviceID[len("shadow-"):]
 	}
 
 	affected := make(map[string]struct{})
-	vse.mu.RLock()
-	for pointID := range points {
-		depKey := fmt.Sprintf("%s.%s.%s", device.ChannelID, device.PhysicalDeviceID, pointID)
-		for _, vdID := range vse.dependencyGraph[depKey] {
-			affected[vdID] = struct{}{}
+
+	if isDelete {
+		zap.L().Warn("Shadow device deleted — checking dependent virtual devices",
+			zap.String("shadow", shadowDeviceID))
+
+		vse.mu.RLock()
+		for depKey := range vse.dependencyGraph {
+			// depKey 格式: channelID.deviceID.pointID — 匹配 deviceID 中段
+			if rawDeviceID != "" && strings.Contains(depKey, "."+rawDeviceID+".") {
+				for _, vdID := range vse.dependencyGraph[depKey] {
+					affected[vdID] = struct{}{}
+				}
+			}
 		}
+		vse.mu.RUnlock()
+	} else {
+		device, err := vse.shadowCore.GetShadowDevice(shadowDeviceID)
+		if err != nil {
+			return
+		}
+
+		vse.mu.RLock()
+		for pointID := range points {
+			depKey := fmt.Sprintf("%s.%s.%s", device.ChannelID, device.PhysicalDeviceID, pointID)
+			for _, vdID := range vse.dependencyGraph[depKey] {
+				affected[vdID] = struct{}{}
+			}
+		}
+		vse.mu.RUnlock()
 	}
-	vse.mu.RUnlock()
 
 	for vdID := range affected {
+		if isDelete {
+			zap.L().Warn("Virtual device recomputed with quality=bad — source shadow deleted",
+				zap.String("virtual", vdID),
+				zap.String("deleted_shadow", shadowDeviceID))
+		}
 		go vse.recomputeVirtualDevice(vdID)
 	}
 }
@@ -237,6 +270,19 @@ func (vse *VirtualShadowEngine) recomputeVirtualDevice(deviceID string) {
 	}
 
 	env := vse.buildEvaluationEnv(device.Dependencies)
+
+	// 汇总：哪些依赖在 env 中缺失（shadow 删除或点位不存在）
+	missingDeps := make([]string, 0)
+	for _, dep := range device.Dependencies {
+		if _, ok := env[depToEnvKey(dep)]; !ok {
+			missingDeps = append(missingDeps, dep)
+		}
+	}
+	if len(missingDeps) > 0 {
+		zap.L().Warn("Virtual device has missing source shadows — formulas will be marked quality=bad",
+			zap.String("virtual", deviceID),
+			zap.Strings("missing_deps", missingDeps))
+	}
 
 	updatedPoints := make(map[string]model.ShadowPoint)
 	now := time.Now()
@@ -319,18 +365,31 @@ func depsForFormula(formula string, dependencies []string) []string {
 	return out
 }
 
+// resolveSourcePoint reads a source physical shadow point for virtual device formula evaluation.
+// Returns nil/false when the shadow device or point is missing (common after real-device deletion).
+// resolveSourcePoint 读取虚拟设备公式的物理影子源点位；影子/点位缺失时返回 nil,false
+// （真实设备删除后常见，不再静默）。
 func (vse *VirtualShadowEngine) resolveSourcePoint(dep string) (*model.ShadowPoint, bool) {
 	deviceID, pointID := parseDepRef(dep)
 	if deviceID == "" || pointID == "" {
+		zap.L().Warn("resolveSourcePoint: invalid dep ref format",
+			zap.String("dep", dep))
 		return nil, false
 	}
 	shadowDeviceID := fmt.Sprintf("shadow-%s", deviceID)
 	shadowDevice, err := vse.shadowCore.GetShadowDevice(shadowDeviceID)
 	if err != nil {
+		zap.L().Warn("resolveSourcePoint: shadow device not found",
+			zap.String("dep", dep),
+			zap.String("shadow", shadowDeviceID),
+			zap.Error(err))
 		return nil, false
 	}
 	point, exists := shadowDevice.Points[pointID]
 	if !exists {
+		zap.L().Warn("resolveSourcePoint: point not found in shadow",
+			zap.String("dep", dep),
+			zap.String("point_id", pointID))
 		return nil, false
 	}
 	return &point, true

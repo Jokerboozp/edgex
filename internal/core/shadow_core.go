@@ -580,13 +580,18 @@ func (sc *ShadowCore) GetMetrics() map[string]interface{} {
 
 func (sc *ShadowCore) DeleteShadowDevice(deviceID string) error {
 	sc.mu.Lock()
-	defer sc.mu.Unlock()
-
 	if _, exists := sc.realShadows[deviceID]; !exists {
+		sc.mu.Unlock()
 		return fmt.Errorf("shadow device not found: %s", deviceID)
 	}
 
 	delete(sc.realShadows, deviceID)
+	sc.mu.Unlock()
+
+	// 发送删除事件通知订阅者（空 points map 作为删除标识 — 写入路径已在 len(changed)==0 时 continue 跳过，不会发空通知）。
+	// Notify subscribers of deletion. Empty points map is the sentinel for "deleted" —
+	// the write path already skips notifications when len(changed)==0, so this is unambiguous.
+	sc.enqueueNotify(deviceID, map[string]model.ShadowPoint{})
 
 	return nil
 }
