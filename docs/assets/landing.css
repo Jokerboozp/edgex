@@ -8,6 +8,12 @@
 /* Token 继承全站 style.css（默认明亮 / [data-theme="dark"] 深色），
    此处不重复定义颜色与几何，避免两套 token 漂移。 */
 
+/* 列间发丝线 —— 等效 0.1px 实色的视觉浓度（1px 宽 × 10% 不透明度），
+   比 --gold-line 再弱一档；两端渐隐，不顶到横线，避免形成硬网格。
+   需要更淡/更浓只调这里的 alpha，不要去改各处的 border-width。 */
+body.page-home { --lp-hairline: rgba(139, 105, 20, 0.10); }
+[data-theme="dark"] body.page-home { --lp-hairline: rgba(212, 175, 55, 0.10); }
+
 /* ------------------------------------------------------------
    Hero —— 纯色沉浸，无框无网
    ------------------------------------------------------------ */
@@ -15,35 +21,41 @@
   position: relative;
   max-width: 1280px;
   margin: 0 auto;
-  padding: 104px 40px 0;
+  padding: 36px 40px 0;
 }
 
-/* 右下角铭牌 —— 置于 HUD 下方，避免压住指标带 */
-.lp-hero__watermark {
-  position: absolute;
-  top: 68px;
-  right: 40px;
-  font-family: 'JetBrains Mono', ui-monospace, monospace;
-  font-size: 10px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--text-dim);
-  pointer-events: none;
-}
-
-/* HUD 状态读数 —— 等宽小字，工程质感 */
-.lp-hud {
-  position: absolute;
-  top: 40px;
-  right: 40px;
+/* ------------------------------------------------------------
+   状态带 —— 左标签 + 右 HUD 同一水平线，底部一条淡分隔线
+   替代原「右上角孤悬 HUD + 左侧开天窗」的布局
+   ------------------------------------------------------------ */
+.lp-hero__ribbon {
+  position: relative;
+  z-index: 2;
   display: flex;
-  gap: 18px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 52px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--gold-line);
+}
+
+/* HUD 状态读数 —— 等宽小字，工程质感；行间以发丝线分隔 */
+.lp-hud {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   font-family: 'JetBrains Mono', ui-monospace, monospace;
   font-size: 10.5px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 .lp-hud__row { display: flex; align-items: center; gap: 6px; }
+.lp-hud__row + .lp-hud__row {
+  margin-left: 18px;
+  padding-left: 18px;
+  border-left: 1px solid var(--lp-hairline);
+}
 .lp-hud__label { color: var(--text-dim); }
 .lp-hud__val { color: var(--text-muted); font-weight: 600; }
 .lp-hud__val--ok { color: var(--success); }
@@ -88,7 +100,7 @@
 }
 
 .lp-hero__title {
-  margin: 28px 0 0;
+  margin: 0;
   font-family: 'Outfit', system-ui, sans-serif;
   /* 上限 54px、系数 3.9vw 是按「整句一行放下」倒推的，勿随意调大：
      56px 时整句约 828px，而 1440 视口左列仅 824px（1200 内容 - 320 粒子列 - 56 gap），
@@ -227,7 +239,7 @@
 .lp-stats {
   position: relative;
   z-index: 2;
-  margin-top: 88px;
+  margin-top: 64px;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 24px;
@@ -237,7 +249,7 @@
 }
 .lp-stat {
   padding-left: 28px;
-  border-left: 1px solid var(--gold-line);
+  border-left: 1px solid var(--lp-hairline);
 }
 .lp-stat:first-child { padding-left: 0; border-left: none; }
 .lp-stat__value {
@@ -408,7 +420,9 @@
   border-top: 1px solid var(--gold-line);
 }
 .lp-flow__ai > svg { width: 18px; height: 18px; flex: none; margin-top: 2px; color: var(--gold); }
-.lp-flow__ai p { margin: 0; font-size: 14px; line-height: 1.8; color: var(--text-muted); max-width: 900px; }
+/* 不限宽：整句约 1100px（14px 字号），AI 旁路横跨整行可用约 1168px，足够单行。
+   勿加 max-width，否则「详见 MCP 接入指南」会被挤断到第二行 */
+.lp-flow__ai p { margin: 0; font-size: 14px; line-height: 1.8; color: var(--text-muted); }
 .lp-flow__ai strong { color: var(--text); font-weight: 600; }
 .lp-flow__ai code {
   font-family: 'JetBrains Mono', ui-monospace, monospace;
@@ -443,6 +457,28 @@
 .lp-bento > .lp-card:nth-child(1),
 .lp-bento > .lp-card:nth-child(3),
 .lp-bento > .lp-card:nth-child(6) { padding-left: 0; }
+
+/* 列间竖向发丝线 —— 落在两列 padding 的正中，高度内缩并上下渐隐 */
+.lp-bento > .lp-card::before {
+  content: '';
+  position: absolute;
+  top: 30px;
+  bottom: 42px;
+  left: 0;
+  width: 1px;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    var(--lp-hairline) 16%,
+    var(--lp-hairline) 84%,
+    transparent 100%
+  );
+  pointer-events: none;
+}
+/* 每行首列无左邻，不画线 */
+.lp-bento > .lp-card:nth-child(1)::before,
+.lp-bento > .lp-card:nth-child(3)::before,
+.lp-bento > .lp-card:nth-child(6)::before { display: none; }
 
 .lp-card__top {
   display: flex;
@@ -637,12 +673,13 @@
    响应式
    ------------------------------------------------------------ */
 @media (max-width: 1080px) {
-  .lp-hero { padding: 80px 24px 0; }
+  .lp-hero { padding: 32px 24px 0; }
   .lp-hero__inner { grid-template-columns: minmax(0, 1fr); gap: 32px; }
   /* 粒子容器为固定 320px，窄屏隐藏以免溢出裁切 */
   .lp-hero__visual, .lp-hero .hero-visual { display: none; }
+  /* 窄屏状态带只保留左侧标签，HUD 读数让位给内容 */
   .lp-hud { display: none; }
-  .lp-hero__watermark { top: 24px; right: 24px; }
+  .lp-hero__ribbon { margin-bottom: 40px; }
   .lp-section { padding: 88px 24px 0; }
   .lp-cta { padding: 64px 24px 0; }
   .lp-flow { grid-template-columns: minmax(0, 1fr); gap: 4px; }
@@ -661,14 +698,15 @@
   .lp-card--half { grid-column: span 4; }
   .lp-card--third { grid-column: span 2; }
   .lp-bento > .lp-card { padding-left: 0; padding-right: 32px; }
+  /* 4 列下 span 混排导致行首不固定，列间线会错位，直接隐藏 */
+  .lp-bento > .lp-card::before { display: none; }
   .lp-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 28px; }
   .lp-stat:nth-child(odd) { padding-left: 0; border-left: none; }
   .lp-doc { grid-template-columns: 44px 120px minmax(0, 1fr) 24px; }
 }
 
 @media (max-width: 720px) {
-  .lp-hero { padding: 56px 18px 0; }
-  .lp-hero__watermark { display: none; }
+  .lp-hero { padding: 24px 18px 0; }
   .lp-install { flex-wrap: wrap; }
   .lp-install__prompt { border-right: none; }
   .lp-install__cmd { white-space: normal; word-break: break-all; }

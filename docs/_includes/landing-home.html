@@ -1,25 +1,26 @@
 <!-- ============================================================
      Hero — Editorial / 纯色沉浸
-     结构：HUD 状态读数 + 标签 + 大标题 + 终端安装命令 + 指标带
+     结构：状态带（左标签 + 右 HUD） + 大标题 + 终端安装命令 + 指标带
      设计约束：无框、无全屏网格、无渐变、无装饰性动效
      JS 契约：保留 [data-hero-visual]（粒子）与 .hero-typewriter（打字机）
      ============================================================ -->
 <section class="lp-hero">
-  <div class="lp-hero__watermark" aria-hidden="true">EDGE/CORE · SOUTHBOUND 13 · NORTHBOUND 5</div>
+  <div class="lp-hero__ribbon">
+    <span class="lp-chip">
+      <span class="lp-chip__dot" aria-hidden="true"></span>
+      EdgeOS 工业边缘计算核心运行时
+    </span>
 
-  <div class="lp-hud" aria-hidden="true">
-    <div class="lp-hud__row"><span class="lp-hud__dot"></span><span class="lp-hud__val lp-hud__val--ok">ONLINE</span></div>
-    <div class="lp-hud__row"><span class="lp-hud__label">TICK</span><span class="lp-hud__val">10ms</span></div>
-    <div class="lp-hud__row"><span class="lp-hud__label">MCP</span><span class="lp-hud__val">READY</span></div>
+    <div class="lp-hud" aria-hidden="true">
+      <div class="lp-hud__row"><span class="lp-hud__dot"></span><span class="lp-hud__val lp-hud__val--ok">ONLINE</span></div>
+      <div class="lp-hud__row"><span class="lp-hud__label">TICK</span><span class="lp-hud__val">10ms</span></div>
+      <div class="lp-hud__row"><span class="lp-hud__label">MCP</span><span class="lp-hud__val">READY</span></div>
+      <div class="lp-hud__row"><span class="lp-hud__label">SB/NB</span><span class="lp-hud__val">13/5</span></div>
+    </div>
   </div>
 
   <div class="lp-hero__inner">
     <div class="lp-hero__copy">
-      <span class="lp-chip">
-        <span class="lp-chip__dot" aria-hidden="true"></span>
-        EdgeOS 工业边缘计算核心运行时
-      </span>
-
       <h1 class="lp-hero__title">打通 OT 与 IT 的<em>工业边缘计算网关</em></h1>
 
       <p class="lp-hero__sub">edgeCore · 轻量级工业边缘计算网关</p>
