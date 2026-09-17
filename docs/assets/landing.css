@@ -1,7 +1,7 @@
 /* ============================================================
-   landing.css — edgeCore 首页（Industrial Console）
-   设计约束：克制 · 冷酷 · 精确 —— 无发光、无毛玻璃、无弹性动效
-   层次只由排版、字重、边框与背景分层建立。
+   landing.css — edgeCore 首页（Editorial / Ledger）
+   设计约束：无卡片 · 无全屏网格 · 大留白 · 靠排版与字重分层
+   层次只由字号、字重、留白与 1px 金色细线建立。
    作用域：body.page-home（仅首页，不污染其他文档页）
    ============================================================ */
 
@@ -9,58 +9,20 @@
    此处不重复定义颜色与几何，避免两套 token 漂移。 */
 
 /* ------------------------------------------------------------
-   Hero
+   Hero —— 纯色沉浸，无框无网
    ------------------------------------------------------------ */
 .lp-hero {
   position: relative;
-  isolation: isolate;
-  overflow: hidden;
-  max-width: 1360px;
+  max-width: 1280px;
   margin: 0 auto;
-  padding: 72px 40px 0;
-  border: 1px solid var(--gold-line);
-  border-radius: var(--radius-lg);
-  background: var(--bg-deep);
+  padding: 104px 40px 0;
 }
 
-/* 蓝图网格 —— 极弱，仅提供工程底纹 */
-.lp-hero__grid {
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  background-image:
-    linear-gradient(to right, var(--gold-line) 1px, transparent 1px),
-    linear-gradient(to bottom, var(--gold-line) 1px, transparent 1px);
-  background-size: 64px 64px;
-  opacity: 0.5;
-  mask-image: radial-gradient(90% 70% at 50% 30%, #000 35%, transparent 100%);
-  -webkit-mask-image: radial-gradient(90% 70% at 50% 30%, #000 35%, transparent 100%);
-}
-
-/* 左侧工程刻度尺 */
-.lp-hero__ruler {
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 20px;
-  border-right: 1px solid var(--gold-line);
-  background-image: repeating-linear-gradient(
-    to bottom,
-    transparent 0,
-    transparent 15px,
-    var(--gold-border) 15px,
-    var(--gold-border) 16px
-  );
-  opacity: 0.45;
-  pointer-events: none;
-}
-
-/* 右下角铭牌 */
+/* 右下角铭牌 —— 置于 HUD 下方，避免压住指标带 */
 .lp-hero__watermark {
   position: absolute;
-  right: 20px;
-  bottom: 12px;
+  top: 68px;
+  right: 40px;
   font-family: 'JetBrains Mono', ui-monospace, monospace;
   font-size: 10px;
   letter-spacing: 0.16em;
@@ -69,13 +31,13 @@
   pointer-events: none;
 }
 
-/* HUD 状态读数 */
+/* HUD 状态读数 —— 等宽小字，工程质感 */
 .lp-hud {
   position: absolute;
-  top: 20px;
-  right: 24px;
+  top: 40px;
+  right: 40px;
   display: flex;
-  gap: 16px;
+  gap: 18px;
   font-family: 'JetBrains Mono', ui-monospace, monospace;
   font-size: 10.5px;
   letter-spacing: 0.08em;
@@ -83,17 +45,16 @@
 }
 .lp-hud__row { display: flex; align-items: center; gap: 6px; }
 .lp-hud__label { color: var(--text-dim); }
-.lp-hud__val { color: var(--text-soft); font-weight: 600; }
+.lp-hud__val { color: var(--text-muted); font-weight: 600; }
 .lp-hud__val--ok { color: var(--success); }
 .lp-hud__dot {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
   border-radius: 50%;
   background: var(--success);
-  box-shadow: 0 0 6px var(--success-glow);
   animation: lp-blink 2s steps(1, end) infinite;
 }
-@keyframes lp-blink { 0%, 60% { opacity: 1; } 61%, 100% { opacity: 0.3; } }
+@keyframes lp-blink { 0%, 60% { opacity: 1; } 61%, 100% { opacity: 0.25; } }
 
 .lp-hero__inner {
   position: relative;
@@ -102,41 +63,37 @@
   grid-template-columns: minmax(0, 1fr) 320px;
   gap: 56px;
   align-items: center;
-  padding-left: 16px;
 }
 
-/* 状态标签 —— 实线边框，等宽字 */
+/* 状态标签 —— 仅下边线，无框无底 */
 .lp-chip {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 4px 11px;
-  border: 1px solid var(--gold-border);
-  border-radius: var(--radius-sm);
-  background: var(--gold-bg);
-  color: var(--gold-light);
+  padding: 0 0 4px;
+  border-bottom: 1px solid var(--gold);
+  color: var(--gold);
   font-family: 'JetBrains Mono', ui-monospace, monospace;
-  font-size: 10.5px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 .lp-chip__dot {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
   border-radius: 50%;
   background: var(--success);
-  box-shadow: 0 0 6px var(--success-glow);
   animation: lp-blink 2s steps(1, end) infinite;
 }
 
 .lp-hero__title {
-  margin: 22px 0 0;
+  margin: 28px 0 0;
   font-family: 'Outfit', system-ui, sans-serif;
-  font-size: clamp(34px, 4.6vw, 60px);
+  font-size: clamp(40px, 5.4vw, 68px);
   font-weight: 800;
-  line-height: 1.06;
-  letter-spacing: -0.03em;
+  line-height: 1.04;
+  letter-spacing: -0.035em;
   color: var(--text);
 }
 .lp-hero__title em {
@@ -145,49 +102,49 @@
 }
 
 .lp-hero__sub {
-  margin: 14px 0 0;
-  font-size: 15px;
+  margin: 20px 0 0;
+  font-size: 16px;
   font-weight: 500;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.01em;
   color: var(--text-soft);
 }
 
 .lp-hero__desc {
   margin: 18px 0 0;
-  max-width: 620px;
-  font-size: 14px;
+  max-width: 640px;
+  font-size: 15px;
   line-height: 1.8;
   color: var(--text-muted);
 }
 
 /* 打字机 */
 .lp-hero .hero-typewriter {
-  margin-top: 16px;
+  margin-top: 18px;
   font-family: 'JetBrains Mono', ui-monospace, monospace;
   font-size: 12.5px;
-  color: var(--gold-light);
+  color: var(--gold);
   min-height: 20px;
 }
 .lp-hero .typewriter-cursor { color: var(--gold); }
 
 /* ------------------------------------------------------------
-   终端风格安装命令
+   终端风格安装命令 —— 唯一保留的框（代码块语义）
    ------------------------------------------------------------ */
 .lp-install {
-  margin-top: 28px;
-  max-width: 620px;
+  margin-top: 36px;
+  max-width: 640px;
   display: flex;
   align-items: center;
   gap: 0;
-  border: 1px solid var(--gold-border);
+  border: 1px solid var(--gold-line);
   border-radius: var(--radius-sm);
-  background: var(--bg-soft);
+  background: var(--bg-surface);
   overflow: hidden;
 }
 .lp-install__prompt {
-  padding: 11px 12px;
+  padding: 12px 14px;
   border-right: 1px solid var(--gold-line);
-  color: var(--success);
+  color: var(--text-dim);
   font-family: 'JetBrains Mono', ui-monospace, monospace;
   font-size: 12.5px;
   font-weight: 600;
@@ -196,7 +153,7 @@
 .lp-install__cmd {
   flex: 1;
   min-width: 0;
-  padding: 11px 14px;
+  padding: 12px 14px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -209,90 +166,89 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 11px 14px;
+  padding: 12px 14px;
   border: none;
   border-left: 1px solid var(--gold-line);
   background: transparent;
-  color: var(--gold-light);
+  color: var(--text-muted);
   font-family: 'JetBrains Mono', ui-monospace, monospace;
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   cursor: pointer;
-  transition: background var(--transition-fast), color var(--transition-fast);
+  transition: color var(--transition-fast), background var(--transition-fast);
 }
-.lp-copy:hover { background: var(--gold-bg-strong); color: var(--gold-bright); }
-.lp-copy.is-copied { background: var(--success-bg); color: var(--success); }
+.lp-copy:hover { background: var(--bg-soft); color: var(--gold); }
+.lp-copy.is-copied { color: var(--success); }
 .lp-copy svg { width: 13px; height: 13px; }
 
 /* ------------------------------------------------------------
-   动作按钮 —— 哑光实心，无渐变
+   动作按钮 —— 反色实心 + 幽灵描边
    ------------------------------------------------------------ */
-.lp-actions { margin-top: 26px; display: flex; flex-wrap: wrap; gap: 10px; }
+.lp-actions { margin-top: 32px; display: flex; flex-wrap: wrap; gap: 12px; }
 .lp-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  height: 42px;
-  padding: 0 22px;
-  border-radius: var(--radius-sm);
-  font-size: 13.5px;
+  height: 48px;
+  padding: 0 28px;
+  border-radius: var(--radius-md);
+  font-size: 14px;
   font-weight: 600;
   letter-spacing: 0.01em;
   text-decoration: none;
   border: 1px solid transparent;
-  transition: background var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast);
+  transition: background var(--transition-base), border-color var(--transition-base), color var(--transition-base);
 }
 .lp-btn--primary {
-  background: var(--gold);
-  border-color: var(--gold);
-  color: #0c0c0e;
+  background: var(--text);
+  border-color: var(--text);
+  color: var(--bg);
 }
-.lp-btn--primary:hover { background: var(--gold-light); border-color: var(--gold-light); }
+.lp-btn--primary:hover { opacity: 0.88; }
 .lp-btn--ghost {
-  background: var(--bg-surface);
+  background: transparent;
   border-color: var(--gold-border);
   color: var(--text-soft);
 }
-.lp-btn--ghost:hover {
-  background: var(--gold-bg);
-  border-color: var(--gold-border-hover);
-  color: var(--gold-light);
-}
-.lp-btn__arrow { transition: transform var(--transition-fast); }
+.lp-btn--ghost:hover { border-color: var(--gold); color: var(--gold); }
+.lp-btn__arrow { transition: transform var(--transition-base); }
 .lp-btn:hover .lp-btn__arrow { transform: translateX(3px); }
 
 /* ------------------------------------------------------------
-   指标条 —— 边框分隔，等宽数值
+   指标带 —— 上下细线，等宽数值
    ------------------------------------------------------------ */
 .lp-stats {
   position: relative;
   z-index: 2;
-  margin-top: 60px;
+  margin-top: 88px;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 24px;
   border-top: 1px solid var(--gold-line);
+  border-bottom: 1px solid var(--gold-line);
+  padding: 32px 0;
 }
 .lp-stat {
-  padding: 20px 24px 24px;
+  padding-left: 28px;
   border-left: 1px solid var(--gold-line);
 }
-.lp-stat:first-child { border-left: none; }
+.lp-stat:first-child { padding-left: 0; border-left: none; }
 .lp-stat__value {
   font-family: 'JetBrains Mono', ui-monospace, monospace;
-  font-size: 26px;
+  font-size: 30px;
   font-weight: 700;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
   color: var(--text);
   line-height: 1.1;
 }
 .lp-stat__value em { font-style: normal; color: var(--gold); }
 .lp-stat__label {
-  margin-top: 6px;
-  font-size: 11.5px;
+  margin-top: 8px;
+  font-size: 12px;
   line-height: 1.5;
-  color: var(--text-dim);
+  color: var(--text-muted);
 }
 
 /* Hero 右侧粒子（script.js 契约，容器固定 320×320） */
@@ -305,111 +261,96 @@
 }
 
 /* ------------------------------------------------------------
-   通用区块
+   通用区块 —— 大留白
    ------------------------------------------------------------ */
 .lp-section {
-  max-width: 1360px;
+  max-width: 1280px;
   margin: 0 auto;
-  padding: 64px 40px 0;
+  padding: 112px 40px 0;
 }
-.lp-section__head { max-width: 720px; margin-bottom: 28px; }
+.lp-section__head { max-width: 680px; margin-bottom: 64px; }
 .lp-kicker {
   display: block;
   font-family: 'JetBrains Mono', ui-monospace, monospace;
-  font-size: 10.5px;
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--gold);
 }
 .lp-section__title {
-  margin: 10px 0 0;
+  margin: 14px 0 0;
   font-family: 'Outfit', system-ui, sans-serif;
-  font-size: clamp(22px, 2.6vw, 30px);
+  font-size: clamp(26px, 3.2vw, 38px);
   font-weight: 700;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
   color: var(--text);
-  line-height: 1.25;
+  line-height: 1.2;
 }
 .lp-section__body {
-  margin: 12px 0 0;
-  font-size: 13.5px;
+  margin: 16px 0 0;
+  font-size: 15px;
   line-height: 1.8;
   color: var(--text-muted);
 }
 
 /* ------------------------------------------------------------
-   数据流向
+   数据流向 —— 横向无卡片序列，仅顶部细线
    ------------------------------------------------------------ */
 .lp-flow {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 48px minmax(0, 1.05fr) 48px minmax(0, 1fr);
-  align-items: stretch;
+  grid-template-columns: minmax(0, 1fr) 56px minmax(0, 1fr) 56px minmax(0, 1fr);
+  align-items: start;
 }
 .lp-node {
-  position: relative;
   display: flex;
   flex-direction: column;
-  padding: 22px 22px 20px;
-  border: 1px solid var(--gold-border);
-  border-radius: var(--radius-lg);
-  background: var(--bg-panel);
-  transition: border-color var(--transition-fast), background var(--transition-fast);
+  padding: 26px 0 0;
+  border-top: 1px solid var(--gold-line);
+  background: none;
+  border-radius: 0;
+  transition: border-color var(--transition-base);
 }
-.lp-node:hover { border-color: var(--gold-border-hover); background: var(--bg-surface); }
-.lp-node--core {
-  background: var(--gold-bg);
-  border-color: var(--gold-border-hover);
-}
+.lp-node:hover { border-top-color: var(--gold); }
+.lp-node--core { border-top-color: var(--gold); }
 .lp-node__icon {
-  width: 34px;
-  height: 34px;
-  display: grid;
-  place-items: center;
-  border: 1px solid var(--gold-border);
-  border-radius: var(--radius-sm);
-  background: var(--gold-bg-strong);
-  color: var(--gold-light);
+  color: var(--gold);
   margin-bottom: 14px;
 }
-.lp-node--core .lp-node__icon {
-  background: var(--gold);
-  border-color: var(--gold);
-  color: #0c0c0e;
-}
-.lp-node__icon svg { width: 17px; height: 17px; }
+.lp-node__icon svg { width: 20px; height: 20px; }
 .lp-node__tag {
   font-family: 'JetBrains Mono', ui-monospace, monospace;
-  font-size: 9.5px;
+  font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--gold);
 }
 .lp-node__title {
-  margin: 7px 0 0;
-  font-size: 16px;
+  margin: 8px 0 0;
+  font-size: 18px;
   font-weight: 600;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.015em;
   color: var(--text);
 }
 .lp-node__desc {
-  margin: 8px 0 0;
-  font-size: 12.5px;
-  line-height: 1.7;
+  margin: 10px 0 0;
+  padding-right: 24px;
+  font-size: 13.5px;
+  line-height: 1.75;
   color: var(--text-muted);
 }
 .lp-node__list {
-  margin: 15px 0 0;
+  margin: 18px 0 0;
   padding: 0;
   list-style: none;
   display: grid;
-  gap: 6px;
+  gap: 7px;
 }
 .lp-node__list li {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 9px;
   font-family: 'JetBrains Mono', ui-monospace, monospace;
   font-size: 11.5px;
   color: var(--text-soft);
@@ -422,192 +363,186 @@
   background: var(--gold);
 }
 
-/* 连接线 —— 细实线 + 低调移动点，无辉光 */
+/* 连接线 —— 细实线 + 低调移动点 */
 .lp-link {
   position: relative;
   display: grid;
   place-items: center;
+  height: 100%;
 }
 .lp-link::before {
   content: '';
   width: 100%;
   height: 1px;
-  background: var(--gold-border);
+  background: var(--gold-line);
 }
 .lp-link::after {
   content: '';
   position: absolute;
   width: 4px;
   height: 4px;
-  background: var(--gold-bright);
+  background: var(--gold);
   animation: lp-flowdot 3s linear infinite;
 }
 .lp-link--r::after { animation-delay: 0.75s; }
 @keyframes lp-flowdot {
-  0%, 100% { transform: translateX(-18px); opacity: 0; }
+  0%, 100% { transform: translateX(-20px); opacity: 0; }
   20%      { opacity: 1; }
   80%      { opacity: 1; }
 }
 
-/* AI 旁路 */
+/* AI 旁路 —— 无框，仅上边线 */
 .lp-flow__ai {
-  margin-top: 14px;
+  margin-top: 56px;
   grid-column: 1 / -1;
   display: flex;
   align-items: flex-start;
-  gap: 12px;
-  padding: 16px 20px;
-  border: 1px solid var(--gold-line);
-  border-radius: var(--radius-md);
-  background: var(--gold-bg);
+  gap: 14px;
+  padding: 26px 0 0;
+  border-top: 1px solid var(--gold-line);
 }
-.lp-flow__ai > svg { width: 16px; height: 16px; flex: none; margin-top: 2px; color: var(--gold); }
-.lp-flow__ai p { margin: 0; font-size: 12.5px; line-height: 1.75; color: var(--text-muted); }
+.lp-flow__ai > svg { width: 18px; height: 18px; flex: none; margin-top: 2px; color: var(--gold); }
+.lp-flow__ai p { margin: 0; font-size: 14px; line-height: 1.8; color: var(--text-muted); max-width: 900px; }
 .lp-flow__ai strong { color: var(--text); font-weight: 600; }
 .lp-flow__ai code {
   font-family: 'JetBrains Mono', ui-monospace, monospace;
-  font-size: 11.5px;
-  color: var(--gold-light);
+  font-size: 12.5px;
+  color: var(--gold);
 }
 .lp-flow__ai a { color: var(--gold); text-decoration: none; }
 .lp-flow__ai a:hover { text-decoration: underline; }
 
 /* ------------------------------------------------------------
-   Bento 模块 —— 编号登记式，无装饰水印
+   能力模块 —— 无框网格，仅顶部细线，hover 线转金
    ------------------------------------------------------------ */
 .lp-bento {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 16px;
+  gap: 0;
 }
 .lp-card {
   position: relative;
   display: flex;
   flex-direction: column;
-  padding: 22px 22px 20px;
-  border: 1px solid var(--gold-border);
-  border-radius: var(--radius-lg);
-  background: var(--bg-panel);
-  transition: border-color var(--transition-fast), background var(--transition-fast);
+  padding: 32px 32px 44px;
+  border-top: 1px solid var(--gold-line);
+  background: none;
+  border-radius: 0;
+  transition: border-color var(--transition-base);
 }
-.lp-card:hover { border-color: var(--gold-border-hover); background: var(--bg-surface); }
+.lp-card:hover { border-top-color: var(--gold); }
 .lp-card--half { grid-column: span 3; }
 .lp-card--third { grid-column: span 2; }
-.lp-card--accent { background: var(--gold-bg); border-color: var(--gold-border-hover); }
+/* 行布局为 01+02 / 03+04+05 / 06+07，每行首列不留左内边距 */
+.lp-bento > .lp-card:nth-child(1),
+.lp-bento > .lp-card:nth-child(3),
+.lp-bento > .lp-card:nth-child(6) { padding-left: 0; }
 
 .lp-card__top {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 14px;
+  gap: 12px;
+  min-height: 20px;
 }
 .lp-card__idx {
   font-family: 'JetBrains Mono', ui-monospace, monospace;
-  font-size: 10.5px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.1em;
   color: var(--gold);
 }
 .lp-card__tag {
   font-family: 'JetBrains Mono', ui-monospace, monospace;
-  font-size: 9.5px;
-  letter-spacing: 0.1em;
+  font-size: 10px;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  padding: 2px 7px;
-  border-radius: var(--radius-sm);
-  background: var(--gold-soft);
-  color: var(--gold-light);
+  color: var(--text-dim);
 }
 .lp-card__icon {
-  width: 34px;
-  height: 34px;
-  display: grid;
-  place-items: center;
-  border: 1px solid var(--gold-border);
-  border-radius: var(--radius-sm);
-  background: var(--gold-bg-strong);
-  color: var(--gold-light);
-  margin-bottom: 14px;
+  color: var(--gold);
+  margin: 20px 0 0;
 }
-.lp-card__icon svg { width: 17px; height: 17px; }
+.lp-card__icon svg { width: 20px; height: 20px; }
 .lp-card__title {
-  margin: 0;
-  font-size: 15.5px;
+  margin: 16px 0 0;
+  font-size: 19px;
   font-weight: 600;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
   color: var(--text);
 }
 .lp-card__desc {
-  margin: 9px 0 0;
-  font-size: 13px;
-  line-height: 1.75;
+  margin: 12px 0 0;
+  padding-right: 8px;
+  font-size: 14px;
+  line-height: 1.8;
   color: var(--text-muted);
 }
 .lp-card__desc code {
   font-family: 'JetBrains Mono', ui-monospace, monospace;
-  font-size: 11.5px;
-  color: var(--gold-light);
+  font-size: 12.5px;
+  color: var(--gold);
 }
 .lp-card__foot {
   margin-top: auto;
-  padding-top: 14px;
-  border-top: 1px solid var(--gold-line);
+  padding-top: 24px;
   font-family: 'JetBrains Mono', ui-monospace, monospace;
   font-size: 10.5px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--gold);
+  color: var(--text-dim);
 }
 .lp-card__foot a { color: var(--gold); text-decoration: none; }
 .lp-card__foot a:hover { text-decoration: underline; }
 
 .lp-card__metrics {
-  margin-top: 16px;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  margin-top: 24px;
+  display: flex;
+  gap: 40px;
 }
 .lp-card__metric span {
   display: block;
   font-family: 'JetBrains Mono', ui-monospace, monospace;
-  font-size: 19px;
+  font-size: 24px;
   font-weight: 700;
+  letter-spacing: -0.02em;
   color: var(--text);
 }
 .lp-card__metric small {
   display: block;
-  margin-top: 2px;
-  font-size: 11px;
-  color: var(--text-dim);
+  margin-top: 4px;
+  font-size: 11.5px;
+  color: var(--text-muted);
 }
 
 /* ------------------------------------------------------------
-   协议矩阵 —— 终端标签
+   协议矩阵 —— 无框流式文本
    ------------------------------------------------------------ */
-.lp-proto { display: flex; flex-wrap: wrap; gap: 8px; }
+.lp-proto {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px 36px;
+  padding-top: 28px;
+  border-top: 1px solid var(--gold-line);
+}
 .lp-proto__item {
   display: inline-flex;
   align-items: baseline;
   gap: 8px;
-  padding: 7px 12px;
-  border: 1px solid var(--gold-border);
-  border-radius: var(--radius-sm);
-  background: var(--bg-surface);
-  font-size: 12.5px;
+  font-size: 14px;
   color: var(--text-soft);
-  transition: border-color var(--transition-fast), background var(--transition-fast);
+  transition: color var(--transition-fast);
 }
-.lp-proto__item:hover { border-color: var(--gold-border-hover); background: var(--gold-bg); }
+.lp-proto__item:hover { color: var(--gold); }
 .lp-proto__item code {
   font-family: 'JetBrains Mono', ui-monospace, monospace;
-  font-size: 10.5px;
-  color: var(--gold);
+  font-size: 11px;
+  color: var(--text-dim);
 }
 .lp-proto__note {
-  margin-top: 14px;
+  margin-top: 28px;
   font-family: 'JetBrains Mono', ui-monospace, monospace;
-  font-size: 11.5px;
+  font-size: 12px;
   color: var(--text-dim);
 }
 .lp-section__body code { color: var(--gold); }
@@ -615,119 +550,129 @@
 .lp-section__body a:hover { text-decoration: underline; }
 
 /* ------------------------------------------------------------
-   文档导航
+   文档导航 —— Ledger 行式（编号 | 标题 | 描述 | 箭头）
    ------------------------------------------------------------ */
-.lp-docs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+.lp-docs { display: grid; grid-template-columns: minmax(0, 1fr); }
 .lp-doc {
-  display: flex;
-  flex-direction: column;
-  padding: 20px;
-  border: 1px solid var(--gold-border);
-  border-radius: var(--radius-md);
-  background: var(--bg-panel);
+  display: grid;
+  grid-template-columns: 56px 160px minmax(0, 1fr) 32px;
+  align-items: baseline;
+  gap: 16px;
+  padding: 26px 0;
+  border-top: 1px solid var(--gold-line);
   text-decoration: none;
-  transition: border-color var(--transition-fast), background var(--transition-fast);
+  transition: border-color var(--transition-base);
 }
-.lp-doc:hover { border-color: var(--gold-border-hover); background: var(--bg-surface); }
+.lp-doc:last-child { border-bottom: 1px solid var(--gold-line); }
+.lp-doc:hover { border-top-color: var(--gold); }
 .lp-doc__idx {
   font-family: 'JetBrains Mono', ui-monospace, monospace;
-  font-size: 10.5px;
+  font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   color: var(--gold);
 }
 .lp-doc__label {
-  margin-top: 12px;
-  font-size: 14.5px;
+  font-size: 17px;
   font-weight: 600;
+  letter-spacing: -0.01em;
   color: var(--text);
 }
 .lp-doc__desc {
-  margin-top: 6px;
-  font-size: 12px;
+  font-size: 13.5px;
   line-height: 1.7;
   color: var(--text-muted);
 }
 .lp-doc__go {
-  margin-top: 14px;
-  font-size: 12px;
+  justify-self: end;
+  font-size: 14px;
   color: var(--gold);
-  transition: transform var(--transition-fast);
+  transition: transform var(--transition-base);
 }
-.lp-doc:hover .lp-doc__go { transform: translateX(3px); }
+.lp-doc:hover .lp-doc__go { transform: translateX(4px); }
 
 /* ------------------------------------------------------------
-   CTA —— 纯边框容器，无光晕
+   CTA —— 无容器，仅上边线
    ------------------------------------------------------------ */
 .lp-cta {
-  max-width: 1360px;
-  margin: 64px auto 0;
-  padding: 48px 40px;
-  border: 1px solid var(--gold-border);
-  border-radius: var(--radius-lg);
-  background: var(--bg-panel);
-  text-align: center;
+  max-width: 1280px;
+  margin: 112px auto 0;
+  padding: 72px 40px 0;
+  border-top: 1px solid var(--gold-line);
 }
 .lp-cta__title {
   margin: 0;
   font-family: 'Outfit', system-ui, sans-serif;
-  font-size: clamp(21px, 2.6vw, 28px);
+  font-size: clamp(24px, 3vw, 36px);
   font-weight: 700;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
   color: var(--text);
 }
 .lp-cta__desc {
-  margin: 12px auto 0;
-  max-width: 560px;
-  font-size: 13.5px;
+  margin: 16px 0 0;
+  max-width: 620px;
+  font-size: 15px;
   line-height: 1.8;
   color: var(--text-muted);
 }
-.lp-cta .lp-actions { justify-content: center; }
+.lp-cta .lp-actions { justify-content: flex-start; }
 
 /* ------------------------------------------------------------
    响应式
    ------------------------------------------------------------ */
 @media (max-width: 1080px) {
-  .lp-hero { padding: 56px 24px 0; }
-  .lp-hero__inner { grid-template-columns: minmax(0, 1fr); gap: 24px; padding-left: 8px; }
+  .lp-hero { padding: 80px 24px 0; }
+  .lp-hero__inner { grid-template-columns: minmax(0, 1fr); gap: 32px; }
   /* 粒子容器为固定 320px，窄屏隐藏以免溢出裁切 */
   .lp-hero__visual, .lp-hero .hero-visual { display: none; }
   .lp-hud { display: none; }
-  .lp-section { padding: 56px 24px 0; }
-  .lp-flow { grid-template-columns: minmax(0, 1fr); gap: 12px; }
-  .lp-link { height: 30px; }
-  .lp-link::before { width: 1px; height: 100%; background: var(--gold-border); }
+  .lp-hero__watermark { top: 24px; right: 24px; }
+  .lp-section { padding: 88px 24px 0; }
+  .lp-cta { padding: 64px 24px 0; }
+  .lp-flow { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+  .lp-node { padding-top: 24px; }
+  .lp-node__desc { padding-right: 0; }
+  .lp-link { height: 36px; }
+  .lp-link::before { width: 1px; height: 100%; background: var(--gold-line); }
   .lp-link::after { animation: lp-flowdot-v 3s linear infinite; }
   .lp-link--r::after { animation-delay: 0.75s; }
   @keyframes lp-flowdot-v {
-    0%, 100% { transform: translateY(-12px); opacity: 0; }
+    0%, 100% { transform: translateY(-14px); opacity: 0; }
     20%      { opacity: 1; }
     80%      { opacity: 1; }
   }
   .lp-bento { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .lp-card--half { grid-column: span 4; }
   .lp-card--third { grid-column: span 2; }
-  .lp-docs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .lp-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .lp-stat { border-top: 1px solid var(--gold-line); }
-  .lp-stat:first-child, .lp-stat:nth-child(3) { border-left: none; }
+  .lp-bento > .lp-card { padding-left: 0; padding-right: 32px; }
+  .lp-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 28px; }
+  .lp-stat:nth-child(odd) { padding-left: 0; border-left: none; }
+  .lp-doc { grid-template-columns: 44px 120px minmax(0, 1fr) 24px; }
 }
 
 @media (max-width: 720px) {
-  .lp-hero { padding: 44px 18px 0; }
-  .lp-hero__ruler { display: none; }
+  .lp-hero { padding: 56px 18px 0; }
+  .lp-hero__watermark { display: none; }
   .lp-install { flex-wrap: wrap; }
   .lp-install__prompt { border-right: none; }
   .lp-install__cmd { white-space: normal; word-break: break-all; }
   .lp-copy { border-left: none; border-top: 1px solid var(--gold-line); width: 100%; justify-content: center; }
   .lp-bento { grid-template-columns: minmax(0, 1fr); }
   .lp-card--half, .lp-card--third { grid-column: span 1; }
-  .lp-docs { grid-template-columns: minmax(0, 1fr); }
-  .lp-section { padding: 44px 18px 0; }
-  .lp-cta { padding: 36px 18px; }
+  .lp-card { padding-right: 0; }
+  .lp-card__metrics { gap: 28px; }
+  .lp-section { padding: 72px 18px 0; }
+  .lp-cta { padding: 56px 18px 0; margin-top: 88px; }
   .lp-stats { grid-template-columns: minmax(0, 1fr); }
-  .lp-stat { border-left: none; }
+  .lp-stat { padding-left: 0; border-left: none; }
+  .lp-doc {
+    grid-template-columns: minmax(0, 1fr) 24px;
+    gap: 8px 12px;
+  }
+  .lp-doc__idx { grid-column: 1; }
+  .lp-doc__go { grid-column: 2; grid-row: 1; }
+  .lp-doc__label { grid-column: 1 / -1; }
+  .lp-doc__desc { grid-column: 1 / -1; }
 }
 
 /* 降低动效偏好 */
