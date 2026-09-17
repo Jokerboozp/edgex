@@ -61,7 +61,7 @@
   z-index: 2;
   display: grid;
   grid-template-columns: minmax(0, 1fr) 320px;
-  gap: 56px;
+  gap: 48px;
   align-items: center;
 }
 
@@ -90,11 +90,16 @@
 .lp-hero__title {
   margin: 28px 0 0;
   font-family: 'Outfit', system-ui, sans-serif;
-  font-size: clamp(40px, 5.4vw, 68px);
+  /* 上限 54px、系数 3.9vw 是按「整句一行放下」倒推的，勿随意调大：
+     56px 时整句约 828px，而 1440 视口左列仅 824px（1200 内容 - 320 粒子列 - 56 gap），
+     4px 之差就会把『打通 OT 与 IT 的 / 工业边缘计算网关』挤断。
+     当前组合在 1081~1920 全区间单行，最紧的 1081 视口余量约 10px。 */
+  font-size: clamp(32px, 3.9vw, 54px);
   font-weight: 800;
   line-height: 1.04;
   letter-spacing: -0.035em;
   color: var(--text);
+  text-wrap: balance;
 }
 .lp-hero__title em {
   font-style: normal;
@@ -268,7 +273,7 @@
   margin: 0 auto;
   padding: 112px 40px 0;
 }
-.lp-section__head { max-width: 680px; margin-bottom: 64px; }
+.lp-section__head { max-width: 720px; margin-bottom: 64px; }
 .lp-kicker {
   display: block;
   font-family: 'JetBrains Mono', ui-monospace, monospace;
@@ -292,6 +297,7 @@
   font-size: 15px;
   line-height: 1.8;
   color: var(--text-muted);
+  text-wrap: pretty;
 }
 
 /* ------------------------------------------------------------
@@ -549,6 +555,15 @@
 .lp-section__body a { color: var(--gold); text-decoration: none; }
 .lp-section__body a:hover { text-decoration: underline; }
 
+/* 描述性段落防孤字：避免最后一行只折出一两个字 */
+.lp-hero__desc,
+.lp-node__desc,
+.lp-card__desc,
+.lp-doc__desc,
+.lp-cta__desc {
+  text-wrap: pretty;
+}
+
 /* ------------------------------------------------------------
    文档导航 —— Ledger 行式（编号 | 标题 | 描述 | 箭头）
    ------------------------------------------------------------ */
@@ -599,6 +614,7 @@
   margin: 112px auto 0;
   padding: 72px 40px 0;
   border-top: 1px solid var(--gold-line);
+  text-align: center;
 }
 .lp-cta__title {
   margin: 0;
@@ -609,13 +625,13 @@
   color: var(--text);
 }
 .lp-cta__desc {
-  margin: 16px 0 0;
+  margin: 16px auto 0;
   max-width: 620px;
   font-size: 15px;
   line-height: 1.8;
   color: var(--text-muted);
 }
-.lp-cta .lp-actions { justify-content: flex-start; }
+.lp-cta .lp-actions { justify-content: center; }
 
 /* ------------------------------------------------------------
    响应式
