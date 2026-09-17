@@ -76,7 +76,7 @@
   --radius-xs: 3px;
 
   /* Layout */
-  --shell-width: 1280px;
+  --shell-width: 1440px;
 
   /* Animation — 机械、无回弹 */
   --transition-fast: 120ms cubic-bezier(0.4, 0, 0.2, 1);
@@ -98,11 +98,12 @@
   --code-inline-bg: rgba(0, 0, 0, 0.05);
   --code-inline-color: #8B6914;
   --code-inline-border: rgba(139, 105, 20, 0.2);
-  --code-block-bg: #F0F0F3;
-  --code-block-color: #18181B;
-  --tok-keyword: #2563eb;
-  --tok-string: #059669;
-  --tok-number: #cf222e;
+  /* 代码块两种主题下统一深墨底 —— 与浅色页面形成硬核对比，语法色用亮色版 */
+  --code-block-bg: #12141A;
+  --code-block-color: #E2E8F0;
+  --tok-keyword: #7DD3FC;
+  --tok-string: #86EFAC;
+  --tok-number: #FCA5A5;
 
   /* Arch Flow (light) */
   --arch-bg: rgba(240, 240, 243, 0.72);
@@ -357,24 +358,36 @@ code, pre { font-family: "JetBrains Mono", "SF Mono", "Fira Code", Consolas, mon
 }
 
 .page-main {
-  padding: 0 0 60px;
+  /* 顶部留白：否则 sticky header 与文档面板之间几乎没有间距，视觉上「断层」 */
+  padding: 32px 0 80px;
 }
 
 /* =========================================
    Markdown body (document pages)
    ========================================= */
-/* 编辑式通栏：无卡片、无边框、无阴影，居中 840px 阅读宽度 */
+/* 文档内容区：撑满容器宽度，多列工业参数表才有横向伸展空间。
+   注意：绝不给 .markdown-body 设 max-width，否则 8 列以上的驱动/寄存器表会被压成窄条。 */
 .markdown-body {
-  padding: 56px 0 88px;
-  max-width: 840px;
-  margin: 0 auto;
-  background: transparent;
-  border: none;
-  border-radius: 0;
-  box-shadow: none;
+  width: 100%;
+  margin: 24px 0 60px;
+  padding: clamp(32px, 4vw, 56px);
+  border-radius: var(--radius-lg);
+  background: var(--bg-surface);
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  border: 1px solid var(--gold-border);
+  box-shadow: var(--shadow-lg), inset 0 1px 0 rgba(255, 255, 255, 0.6);
   line-height: 1.8;
-  font-size: 1.02rem;
+  font-size: 1rem;
 }
+
+/* 正文行宽约束：1440px 全宽下中文行长过长，段落/列表/引用限制到 960px，
+   表格与标题不受限，仍可横向铺满。 */
+.markdown-body > p,
+.markdown-body > ul,
+.markdown-body > ol,
+.markdown-body > blockquote,
+.markdown-body > pre { max-width: 960px; }
 
 .markdown-body h1, .markdown-body h2, .markdown-body h3, .markdown-body h4 {
   color: var(--text);
@@ -392,7 +405,8 @@ code, pre { font-family: "JetBrains Mono", "SF Mono", "Fira Code", Consolas, mon
 .markdown-body h2 { margin-top: 2.2em; padding-bottom: 0.5em; border-bottom: 1px solid var(--gold-border); font-size: 1.6rem; }
 .markdown-body h3 { margin-top: 1.6em; font-size: 1.25rem; color: var(--text-soft); }
 
-.markdown-body p, .markdown-body li, .markdown-body blockquote { color: var(--text-muted); }
+.markdown-body p, .markdown-body li, .markdown-body blockquote { color: var(--text-muted); text-wrap: pretty; }
+.markdown-body h1, .markdown-body h2, .markdown-body h3, .markdown-body h4 { text-wrap: balance; }
 .markdown-body ul, .markdown-body ol { padding-left: 1.3rem; }
 
 .markdown-body blockquote {
@@ -414,14 +428,17 @@ code, pre { font-family: "JetBrains Mono", "SF Mono", "Fira Code", Consolas, mon
 
 .markdown-body table {
   width: 100%;
+  max-width: 100%;
   border-collapse: separate;
   border-spacing: 0;
-  margin: 1.6rem 0;
+  margin: 1.8rem 0;
   border-radius: var(--radius-md);
   border: 1px solid var(--gold-border);
-  overflow: hidden;
+  background: var(--bg);
+  /* block + overflow-x：列数超出容器时横向滚动，而不是把单元格压成竖排窄条 */
   display: block;
   overflow-x: auto;
+  overflow-y: hidden;
 }
 
 .markdown-body thead {
@@ -433,6 +450,7 @@ code, pre { font-family: "JetBrains Mono", "SF Mono", "Fira Code", Consolas, mon
   border-bottom: 1px solid var(--gold-border);
   text-align: left;
   font-size: 0.95rem;
+  vertical-align: top;
 }
 
 .markdown-body th {
@@ -442,6 +460,13 @@ code, pre { font-family: "JetBrains Mono", "SF Mono", "Fira Code", Consolas, mon
   font-size: 0.8rem;
   letter-spacing: 0.05em;
   text-transform: uppercase;
+  /* 表头不折行 —— 多列参数表的列宽锚点，避免列被压缩后整表塌陷 */
+  white-space: nowrap;
+}
+
+/* 窄屏：整表不折行，改为横向滚动，保持工业参数矩阵的横向可读性 */
+@media (max-width: 1100px) {
+  .markdown-body table { white-space: nowrap; }
 }
 
 /* 偶数行斑马纹 —— 密集数据表格的可读性 */
@@ -533,13 +558,15 @@ code, pre { font-family: "JetBrains Mono", "SF Mono", "Fira Code", Consolas, mon
 .section-index-main .markdown-body { margin-top: 0; }
 
 .section-index-hero {
-  margin-bottom: 28px;
-  padding: clamp(32px, 4vw, 48px);
+  margin: 32px 0 28px;
+  padding: clamp(32px, 4vw, 52px);
   border-radius: var(--radius-lg);
-  background: var(--bg-surface);
+  /* 用纯白面板 + 实边 + 阴影与 --bg-deep 拉开层次，
+     否则 light 主题下面板色（#FAFAFB）与页面底色（#F4F4F6）几乎同色，看起来像裸底 */
+  background: var(--bg);
   color: var(--text);
   border: 1px solid var(--gold-border);
-  box-shadow: var(--shadow);
+  box-shadow: var(--shadow-lg), inset 0 1px 0 rgba(255, 255, 255, 0.7);
 }
 
 .section-index-hero .eyebrow {
