@@ -1,735 +1,444 @@
 /* ============================================================
-   landing.css — edgeCore 首页（Editorial / Ledger）
-   设计约束：无卡片 · 无全屏网格 · 大留白 · 靠排版与字重分层
-   层次只由字号、字重、留白与 1px 金色细线建立。
-   作用域：body.page-home（仅首页，不污染其他文档页）
+   landing.css — edgeCore 首页专属模块
+   ------------------------------------------------------------
+   通用语言（首屏空间舞台、徽章、终端胶囊、按钮、区块标题、
+   指标带、页脚、发丝线矩阵）已收归 assets/style.css。
+
+   本文件只保留首页自己的模块，统一走【发丝线 + 留白】的账页语言：
+       · 端到端数据流向 lp-flow / lp-node / lp-link
+       · 核心能力矩阵 lp-bento / lp-card
+       · 协议清单 lp-proto
+       · 收尾 CTA lp-cta
+   作用域：body.page-home，不污染文档内页。
    ============================================================ */
 
-/* Token 继承全站 style.css（默认明亮 / [data-theme="dark"] 深色），
-   此处不重复定义颜色与几何，避免两套 token 漂移。 */
-
-/* 列间发丝线 —— 等效 0.1px 实色的视觉浓度（1px 宽 × 10% 不透明度），
-   比 --gold-line 再弱一档；两端渐隐，不顶到横线，避免形成硬网格。
-   需要更淡/更浓只调这里的 alpha，不要去改各处的 border-width。 */
-body.page-home { --lp-hairline: rgba(139, 105, 20, 0.10); }
-[data-theme="dark"] body.page-home { --lp-hairline: rgba(212, 175, 55, 0.10); }
-
 /* ------------------------------------------------------------
-   Hero —— 纯色沉浸，无框无网
-   ------------------------------------------------------------ */
-.lp-hero {
-  position: relative;
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 36px 40px 0;
-}
-
-/* ------------------------------------------------------------
-   状态带 —— 左标签 + 右 HUD 同一水平线，底部一条淡分隔线
-   替代原「右上角孤悬 HUD + 左侧开天窗」的布局
-   ------------------------------------------------------------ */
-.lp-hero__ribbon {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 24px;
-  margin-bottom: 52px;
-  padding-bottom: 14px;
-  border-bottom: 1px solid var(--gold-line);
-}
-
-/* HUD 状态读数 —— 等宽小字，工程质感；行间以发丝线分隔 */
-.lp-hud {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  font-family: 'JetBrains Mono', ui-monospace, monospace;
-  font-size: 10.5px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-.lp-hud__row { display: flex; align-items: center; gap: 6px; }
-.lp-hud__row + .lp-hud__row {
-  margin-left: 18px;
-  padding-left: 18px;
-  border-left: 1px solid var(--lp-hairline);
-}
-.lp-hud__label { color: var(--text-dim); }
-.lp-hud__val { color: var(--text-muted); font-weight: 600; }
-.lp-hud__val--ok { color: var(--success); }
-.lp-hud__dot {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: var(--success);
-  animation: lp-blink 2s steps(1, end) infinite;
-}
-@keyframes lp-blink { 0%, 60% { opacity: 1; } 61%, 100% { opacity: 0.25; } }
-
-.lp-hero__inner {
-  position: relative;
-  z-index: 2;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 320px;
-  gap: 48px;
-  align-items: center;
-}
-
-/* 状态标签 —— 仅下边线，无框无底 */
-.lp-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 0 0 4px;
-  border-bottom: 1px solid var(--gold);
-  color: var(--gold);
-  font-family: 'JetBrains Mono', ui-monospace, monospace;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-.lp-chip__dot {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: var(--success);
-  animation: lp-blink 2s steps(1, end) infinite;
-}
-
-.lp-hero__title {
-  margin: 0;
-  font-family: 'Outfit', system-ui, sans-serif;
-  /* 上限 54px、系数 3.9vw 是按「整句一行放下」倒推的，勿随意调大：
-     56px 时整句约 828px，而 1440 视口左列仅 824px（1200 内容 - 320 粒子列 - 56 gap），
-     4px 之差就会把『打通 OT 与 IT 的 / 工业边缘计算网关』挤断。
-     当前组合在 1081~1920 全区间单行，最紧的 1081 视口余量约 10px。 */
-  font-size: clamp(32px, 3.9vw, 54px);
-  font-weight: 800;
-  line-height: 1.04;
-  letter-spacing: -0.035em;
-  color: var(--text);
-  text-wrap: balance;
-}
-.lp-hero__title em {
-  font-style: normal;
-  color: var(--gold);
-}
-
-.lp-hero__sub {
-  margin: 20px 0 0;
-  font-size: 16px;
-  font-weight: 500;
-  letter-spacing: 0.01em;
-  color: var(--text-soft);
-}
-
-.lp-hero__desc {
-  margin: 18px 0 0;
-  max-width: 640px;
-  font-size: 15px;
-  line-height: 1.8;
-  color: var(--text-muted);
-}
-
-/* 打字机 */
-.lp-hero .hero-typewriter {
-  margin-top: 18px;
-  font-family: 'JetBrains Mono', ui-monospace, monospace;
-  font-size: 12.5px;
-  color: var(--gold);
-  min-height: 20px;
-}
-.lp-hero .typewriter-cursor { color: var(--gold); }
-
-/* ------------------------------------------------------------
-   终端风格安装命令 —— 唯一保留的框（代码块语义）
-   ------------------------------------------------------------ */
-.lp-install {
-  margin-top: 36px;
-  max-width: 640px;
-  display: flex;
-  align-items: center;
-  gap: 0;
-  border: 1px solid var(--gold-line);
-  border-radius: var(--radius-sm);
-  background: var(--bg-surface);
-  overflow: hidden;
-}
-.lp-install__prompt {
-  padding: 12px 14px;
-  border-right: 1px solid var(--gold-line);
-  color: var(--text-dim);
-  font-family: 'JetBrains Mono', ui-monospace, monospace;
-  font-size: 12.5px;
-  font-weight: 600;
-  user-select: none;
-}
-.lp-install__cmd {
-  flex: 1;
-  min-width: 0;
-  padding: 12px 14px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-family: 'JetBrains Mono', ui-monospace, monospace;
-  font-size: 12.5px;
-  color: var(--text-soft);
-}
-.lp-copy {
-  flex: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 12px 14px;
-  border: none;
-  border-left: 1px solid var(--gold-line);
-  background: transparent;
-  color: var(--text-muted);
-  font-family: 'JetBrains Mono', ui-monospace, monospace;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition: color var(--transition-fast), background var(--transition-fast);
-}
-.lp-copy:hover { background: var(--bg-soft); color: var(--gold); }
-.lp-copy.is-copied { color: var(--success); }
-.lp-copy svg { width: 13px; height: 13px; }
-
-/* ------------------------------------------------------------
-   动作按钮 —— 反色实心 + 幽灵描边
-   ------------------------------------------------------------ */
-.lp-actions { margin-top: 32px; display: flex; flex-wrap: wrap; gap: 12px; }
-.lp-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  height: 48px;
-  padding: 0 28px;
-  border-radius: var(--radius-md);
-  font-size: 14px;
-  font-weight: 600;
-  letter-spacing: 0.01em;
-  text-decoration: none;
-  border: 1px solid transparent;
-  transition: background var(--transition-base), border-color var(--transition-base), color var(--transition-base);
-}
-.lp-btn--primary {
-  background: var(--text);
-  border-color: var(--text);
-  color: var(--bg);
-}
-.lp-btn--primary:hover { opacity: 0.88; }
-.lp-btn--ghost {
-  background: transparent;
-  border-color: var(--gold-border);
-  color: var(--text-soft);
-}
-.lp-btn--ghost:hover { border-color: var(--gold); color: var(--gold); }
-.lp-btn__arrow { transition: transform var(--transition-base); }
-.lp-btn:hover .lp-btn__arrow { transform: translateX(3px); }
-
-/* ------------------------------------------------------------
-   指标带 —— 上下细线，等宽数值
-   ------------------------------------------------------------ */
-.lp-stats {
-  position: relative;
-  z-index: 2;
-  margin-top: 64px;
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 24px;
-  border-top: 1px solid var(--gold-line);
-  border-bottom: 1px solid var(--gold-line);
-  padding: 32px 0;
-}
-.lp-stat {
-  padding-left: 28px;
-  border-left: 1px solid var(--lp-hairline);
-}
-.lp-stat:first-child { padding-left: 0; border-left: none; }
-.lp-stat__value {
-  font-family: 'JetBrains Mono', ui-monospace, monospace;
-  font-size: 30px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  color: var(--text);
-  line-height: 1.1;
-}
-.lp-stat__value em { font-style: normal; color: var(--gold); }
-.lp-stat__label {
-  margin-top: 8px;
-  font-size: 12px;
-  line-height: 1.5;
-  color: var(--text-muted);
-}
-
-/* Hero 右侧粒子（script.js 契约，容器固定 320×320） */
-.lp-hero .hero-visual,
-.lp-hero__visual {
-  width: 320px;
-  height: 320px;
-  min-height: 320px;
-  margin: 0 auto;
-}
-
-/* ------------------------------------------------------------
-   通用区块 —— 大留白
-   ------------------------------------------------------------ */
-.lp-section {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 112px 40px 0;
-}
-.lp-section__head { max-width: 720px; margin-bottom: 64px; }
-.lp-kicker {
-  display: block;
-  font-family: 'JetBrains Mono', ui-monospace, monospace;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--gold);
-}
-.lp-section__title {
-  margin: 14px 0 0;
-  font-family: 'Outfit', system-ui, sans-serif;
-  font-size: clamp(26px, 3.2vw, 38px);
-  font-weight: 700;
-  letter-spacing: -0.03em;
-  color: var(--text);
-  line-height: 1.2;
-}
-.lp-section__body {
-  margin: 16px 0 0;
-  font-size: 15px;
-  line-height: 1.8;
-  color: var(--text-muted);
-  text-wrap: pretty;
-}
-
-/* ------------------------------------------------------------
-   数据流向 —— 横向无卡片序列，仅顶部细线
+   端到端数据流向 —— 三段式账页行 + 连接器
    ------------------------------------------------------------ */
 .lp-flow {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 56px minmax(0, 1fr) 56px minmax(0, 1fr);
-  align-items: start;
+  align-items: stretch;
+  /* 通栏发丝线把三段收进同一「行」，列间只靠连接器分隔 */
+  border-top: 1px solid var(--line);
 }
+
 .lp-node {
   display: flex;
   flex-direction: column;
-  padding: 26px 0 0;
-  border-top: 1px solid var(--gold-line);
+  padding: 28px 24px 32px 0;
   background: none;
-  border-radius: 0;
-  transition: border-color var(--transition-base);
 }
-.lp-node:hover { border-top-color: var(--gold); }
-.lp-node--core { border-top-color: var(--gold); }
+
 .lp-node__icon {
   color: var(--gold);
-  margin-bottom: 14px;
+  margin-bottom: 16px;
 }
-.lp-node__icon svg { width: 20px; height: 20px; }
+
+.lp-node__icon svg {
+  width: 20px;
+  height: 20px;
+}
+
 .lp-node__tag {
-  font-family: 'JetBrains Mono', ui-monospace, monospace;
-  font-size: 10px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
   font-weight: 600;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--gold);
+  color: var(--gold-deep);
 }
+
 .lp-node__title {
-  margin: 8px 0 0;
-  font-size: 18px;
+  margin-top: 8px;
+  font-size: 17px;
   font-weight: 600;
-  letter-spacing: -0.015em;
+  letter-spacing: -0.02em;
   color: var(--text);
 }
-.lp-node__desc {
-  margin: 10px 0 0;
-  padding-right: 24px;
-  font-size: 13.5px;
-  line-height: 1.75;
-  color: var(--text-muted);
+
+/* 核心列靠字色强调，不靠边框或底色 */
+.lp-node--core .lp-node__title {
+  color: var(--gold-deep);
 }
+
+.lp-node__desc {
+  margin-top: 10px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--text-2);
+  text-wrap: pretty;
+}
+
 .lp-node__list {
-  margin: 18px 0 0;
-  padding: 0;
-  list-style: none;
   display: grid;
   gap: 7px;
+  margin: 18px 0 0;
+  padding: 14px 0 0;
+  border-top: 1px solid var(--line-hair);
+  list-style: none;
 }
+
 .lp-node__list li {
   display: flex;
   align-items: center;
   gap: 9px;
-  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-family: var(--font-mono);
   font-size: 11.5px;
-  color: var(--text-soft);
+  color: var(--text-2);
 }
+
 .lp-node__list li::before {
   content: '';
   flex: none;
   width: 4px;
   height: 4px;
+  border-radius: 50%;
   background: var(--gold);
 }
 
-/* 连接线 —— 细实线 + 低调移动点 */
+/* 连接器 —— 细实线 + 低调移动点，表达「数据在流动」 */
 .lp-link {
   position: relative;
   display: grid;
   place-items: center;
-  height: 100%;
 }
+
 .lp-link::before {
   content: '';
   width: 100%;
   height: 1px;
-  background: var(--gold-line);
+  background: var(--line);
 }
+
 .lp-link::after {
   content: '';
   position: absolute;
   width: 4px;
   height: 4px;
+  border-radius: 50%;
   background: var(--gold);
   animation: lp-flowdot 3s linear infinite;
 }
-.lp-link--r::after { animation-delay: 0.75s; }
-@keyframes lp-flowdot {
-  0%, 100% { transform: translateX(-20px); opacity: 0; }
-  20%      { opacity: 1; }
-  80%      { opacity: 1; }
+
+.lp-link--r::after {
+  animation-delay: 0.75s;
 }
 
-/* AI 旁路 —— 无框，仅上边线 */
+@keyframes lp-flowdot {
+  0%,
+  100% { transform: translateX(-18px); opacity: 0; }
+  20% { opacity: 1; }
+  80% { opacity: 1; }
+}
+
+/* AI 旁路 —— 行末旁注，一条发丝线开口，不做面板 */
 .lp-flow__ai {
-  margin-top: 56px;
   grid-column: 1 / -1;
   display: flex;
   align-items: flex-start;
   gap: 14px;
-  padding: 26px 0 0;
-  border-top: 1px solid var(--gold-line);
+  margin-top: 28px;
+  padding: 22px 0 0;
+  border-top: 1px solid var(--line-hair);
 }
-.lp-flow__ai > svg { width: 18px; height: 18px; flex: none; margin-top: 2px; color: var(--gold); }
-/* 不限宽：整句约 1100px（14px 字号），AI 旁路横跨整行可用约 1168px，足够单行。
-   勿加 max-width，否则「详见 MCP 接入指南」会被挤断到第二行 */
-.lp-flow__ai p { margin: 0; font-size: 14px; line-height: 1.8; color: var(--text-muted); }
-.lp-flow__ai strong { color: var(--text); font-weight: 600; }
-.lp-flow__ai code {
-  font-family: 'JetBrains Mono', ui-monospace, monospace;
-  font-size: 12.5px;
+
+.lp-flow__ai > svg {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  margin-top: 3px;
   color: var(--gold);
 }
-.lp-flow__ai a { color: var(--gold); text-decoration: none; }
-.lp-flow__ai a:hover { text-decoration: underline; }
+
+/* 不限宽：整句在 13.5px 字号下横跨整行可用宽度足够单行，
+   加 max-width 会把「详见 MCP 接入指南」挤到第二行 */
+.lp-flow__ai p {
+  font-size: 13.5px;
+  line-height: 1.7;
+  color: var(--text-2);
+}
+
+.lp-flow__ai strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.lp-flow__ai code {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--gold-deep);
+}
+
+.lp-flow__ai a {
+  color: var(--gold-deep);
+  transition: color var(--t-fast);
+}
+
+.lp-flow__ai a:hover {
+  color: var(--gold-hover);
+}
 
 /* ------------------------------------------------------------
-   能力模块 —— 无框网格，仅顶部细线，hover 线转金
+   核心能力矩阵 —— 6 列账页网格（Bento 跨度，发丝线分格）
    ------------------------------------------------------------ */
 .lp-bento {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 0;
+  gap: 1px;
+  align-items: stretch;
+  background: var(--line-hair);
+  box-shadow: 0 0 0 1px var(--line-hair);
 }
+
 .lp-card {
-  position: relative;
   display: flex;
   flex-direction: column;
-  padding: 32px 32px 44px;
-  border-top: 1px solid var(--gold-line);
-  background: none;
-  border-radius: 0;
-  transition: border-color var(--transition-base);
+  padding: 26px 24px;
+  background: var(--bg);
+  transition: background-color var(--t-fast);
 }
-.lp-card:hover { border-top-color: var(--gold); }
+
+.lp-card:hover {
+  background: var(--surface-sub);
+}
+
 .lp-card--half { grid-column: span 3; }
 .lp-card--third { grid-column: span 2; }
-/* 行布局为 01+02 / 03+04+05 / 06+07，每行首列不留左内边距 */
-.lp-bento > .lp-card:nth-child(1),
-.lp-bento > .lp-card:nth-child(3),
-.lp-bento > .lp-card:nth-child(6) { padding-left: 0; }
 
-/* 列间竖向发丝线 —— 落在两列 padding 的正中，高度内缩并上下渐隐 */
-.lp-bento > .lp-card::before {
-  content: '';
-  position: absolute;
-  top: 30px;
-  bottom: 42px;
-  left: 0;
-  width: 1px;
-  background: linear-gradient(
-    to bottom,
-    transparent 0%,
-    var(--lp-hairline) 16%,
-    var(--lp-hairline) 84%,
-    transparent 100%
-  );
-  pointer-events: none;
+/* 主推模块：顶沿一道 2px 金线，代替高分卡片的强调 */
+.lp-card--accent {
+  box-shadow: inset 0 2px 0 var(--gold);
 }
-/* 每行首列无左邻，不画线 */
-.lp-bento > .lp-card:nth-child(1)::before,
-.lp-bento > .lp-card:nth-child(3)::before,
-.lp-bento > .lp-card:nth-child(6)::before { display: none; }
 
 .lp-card__top {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  min-height: 20px;
 }
+
 .lp-card__idx {
-  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.1em;
-  color: var(--gold);
+  letter-spacing: 0.06em;
+  color: var(--gold-deep);
 }
+
 .lp-card__tag {
-  font-family: 'JetBrains Mono', ui-monospace, monospace;
-  font-size: 10px;
-  letter-spacing: 0.12em;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--text-dim);
+  color: var(--text-3);
 }
+
 .lp-card__icon {
+  margin-top: 20px;
   color: var(--gold);
-  margin: 20px 0 0;
 }
-.lp-card__icon svg { width: 20px; height: 20px; }
+
+.lp-card__icon svg {
+  width: 20px;
+  height: 20px;
+}
+
 .lp-card__title {
-  margin: 16px 0 0;
-  font-size: 19px;
+  margin-top: 14px;
+  font-size: 16px;
   font-weight: 600;
   letter-spacing: -0.02em;
   color: var(--text);
 }
+
 .lp-card__desc {
-  margin: 12px 0 0;
-  padding-right: 8px;
-  font-size: 14px;
-  line-height: 1.8;
-  color: var(--text-muted);
+  margin-top: 12px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--text-2);
+  text-wrap: pretty;
 }
+
 .lp-card__desc code {
-  font-family: 'JetBrains Mono', ui-monospace, monospace;
-  font-size: 12.5px;
-  color: var(--gold);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--gold-deep);
 }
-.lp-card__foot {
-  margin-top: auto;
-  padding-top: 24px;
-  font-family: 'JetBrains Mono', ui-monospace, monospace;
-  font-size: 10.5px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--text-dim);
-}
-.lp-card__foot a { color: var(--gold); text-decoration: none; }
-.lp-card__foot a:hover { text-decoration: underline; }
 
 .lp-card__metrics {
-  margin-top: 24px;
   display: flex;
-  gap: 40px;
+  gap: 36px;
+  margin-top: 22px;
 }
+
 .lp-card__metric span {
   display: block;
-  font-family: 'JetBrains Mono', ui-monospace, monospace;
-  font-size: 24px;
-  font-weight: 700;
+  font-family: var(--font-mono);
+  font-size: 20px;
+  font-weight: 600;
   letter-spacing: -0.02em;
   color: var(--text);
+  font-variant-numeric: tabular-nums;
 }
+
 .lp-card__metric small {
   display: block;
   margin-top: 4px;
-  font-size: 11.5px;
-  color: var(--text-muted);
+  font-size: 11px;
+  color: var(--text-3);
+}
+
+.lp-card__foot {
+  margin-top: auto;
+  padding-top: 22px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+
+.lp-card__foot a {
+  color: var(--gold-deep);
+  transition: color var(--t-fast);
+}
+
+.lp-card__foot a:hover {
+  color: var(--gold-hover);
 }
 
 /* ------------------------------------------------------------
-   协议矩阵 —— 无框流式文本
+   协议清单 —— 胶囊标签流
    ------------------------------------------------------------ */
 .lp-proto {
   display: flex;
   flex-wrap: wrap;
-  gap: 14px 36px;
-  padding-top: 28px;
-  border-top: 1px solid var(--gold-line);
+  gap: 8px;
 }
+
 .lp-proto__item {
   display: inline-flex;
   align-items: baseline;
   gap: 8px;
-  font-size: 14px;
-  color: var(--text-soft);
-  transition: color var(--transition-fast);
+  padding: 6px 12px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--line);
+  font-size: 12.5px;
+  color: var(--text);
+  transition: border-color var(--t-fast), background-color var(--t-fast);
 }
-.lp-proto__item:hover { color: var(--gold); }
-.lp-proto__item code {
-  font-family: 'JetBrains Mono', ui-monospace, monospace;
-  font-size: 11px;
-  color: var(--text-dim);
-}
-.lp-proto__note {
-  margin-top: 28px;
-  font-family: 'JetBrains Mono', ui-monospace, monospace;
-  font-size: 12px;
-  color: var(--text-dim);
-}
-.lp-section__body code { color: var(--gold); }
-.lp-section__body a { color: var(--gold); text-decoration: none; }
-.lp-section__body a:hover { text-decoration: underline; }
 
-/* 描述性段落防孤字：避免最后一行只折出一两个字 */
-.lp-hero__desc,
-.lp-node__desc,
-.lp-card__desc,
-.lp-doc__desc,
+.lp-proto__item:hover {
+  border-color: var(--gold-border-hover);
+  background: var(--surface);
+}
+
+.lp-proto__item code {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-3);
+}
+
+.lp-proto__note {
+  margin-top: 20px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--text-3);
+}
+
+/* ------------------------------------------------------------
+   CTA —— 居中，仅顶部发丝线
+   ------------------------------------------------------------ */
+.lp-cta {
+  margin-top: var(--section-gap);
+  padding-top: 72px;
+  border-top: 1px solid var(--line);
+  text-align: center;
+}
+
+.lp-cta__title {
+  font-size: clamp(24px, 3vw, 34px);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--text);
+  text-wrap: balance;
+}
+
 .lp-cta__desc {
+  max-width: 620px;
+  margin: 14px auto 0;
+  font-size: 14.5px;
+  line-height: 1.7;
+  color: var(--text-2);
   text-wrap: pretty;
 }
 
 /* ------------------------------------------------------------
-   文档导航 —— Ledger 行式（编号 | 标题 | 描述 | 箭头）
-   ------------------------------------------------------------ */
-.lp-docs { display: grid; grid-template-columns: minmax(0, 1fr); }
-.lp-doc {
-  display: grid;
-  grid-template-columns: 56px 160px minmax(0, 1fr) 32px;
-  align-items: baseline;
-  gap: 16px;
-  padding: 26px 0;
-  border-top: 1px solid var(--gold-line);
-  text-decoration: none;
-  transition: border-color var(--transition-base);
-}
-.lp-doc:last-child { border-bottom: 1px solid var(--gold-line); }
-.lp-doc:hover { border-top-color: var(--gold); }
-.lp-doc__idx {
-  font-family: 'JetBrains Mono', ui-monospace, monospace;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  color: var(--gold);
-}
-.lp-doc__label {
-  font-size: 17px;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  color: var(--text);
-}
-.lp-doc__desc {
-  font-size: 13.5px;
-  line-height: 1.7;
-  color: var(--text-muted);
-}
-.lp-doc__go {
-  justify-self: end;
-  font-size: 14px;
-  color: var(--gold);
-  transition: transform var(--transition-base);
-}
-.lp-doc:hover .lp-doc__go { transform: translateX(4px); }
-
-/* ------------------------------------------------------------
-   CTA —— 无容器，仅上边线
-   ------------------------------------------------------------ */
-.lp-cta {
-  max-width: 1280px;
-  margin: 112px auto 0;
-  padding: 72px 40px 0;
-  border-top: 1px solid var(--gold-line);
-  text-align: center;
-}
-.lp-cta__title {
-  margin: 0;
-  font-family: 'Outfit', system-ui, sans-serif;
-  font-size: clamp(24px, 3vw, 36px);
-  font-weight: 700;
-  letter-spacing: -0.03em;
-  color: var(--text);
-}
-.lp-cta__desc {
-  margin: 16px auto 0;
-  max-width: 620px;
-  font-size: 15px;
-  line-height: 1.8;
-  color: var(--text-muted);
-}
-.lp-cta .lp-actions { justify-content: center; }
-
-/* ------------------------------------------------------------
    响应式
    ------------------------------------------------------------ */
-@media (max-width: 1080px) {
-  .lp-hero { padding: 32px 24px 0; }
-  .lp-hero__inner { grid-template-columns: minmax(0, 1fr); gap: 32px; }
-  /* 粒子容器为固定 320px，窄屏隐藏以免溢出裁切 */
-  .lp-hero__visual, .lp-hero .hero-visual { display: none; }
-  /* 窄屏状态带只保留左侧标签，HUD 读数让位给内容 */
-  .lp-hud { display: none; }
-  .lp-hero__ribbon { margin-bottom: 40px; }
-  .lp-section { padding: 88px 24px 0; }
-  .lp-cta { padding: 64px 24px 0; }
-  .lp-flow { grid-template-columns: minmax(0, 1fr); gap: 4px; }
-  .lp-node { padding-top: 24px; }
-  .lp-node__desc { padding-right: 0; }
-  .lp-link { height: 36px; }
-  .lp-link::before { width: 1px; height: 100%; background: var(--gold-line); }
-  .lp-link::after { animation: lp-flowdot-v 3s linear infinite; }
-  .lp-link--r::after { animation-delay: 0.75s; }
-  @keyframes lp-flowdot-v {
-    0%, 100% { transform: translateY(-14px); opacity: 0; }
-    20%      { opacity: 1; }
-    80%      { opacity: 1; }
+@media (max-width: 1024px) {
+  /* 纵向堆叠：每段自成一行，用发丝线分格 */
+  .lp-flow {
+    grid-template-columns: minmax(0, 1fr);
   }
-  .lp-bento { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+
+  .lp-node {
+    padding: 24px 0 26px;
+    border-bottom: 1px solid var(--line-hair);
+  }
+
+  .lp-link {
+    height: 32px;
+  }
+
+  .lp-link::before {
+    width: 1px;
+    height: 100%;
+  }
+
+  .lp-link::after {
+    animation: lp-flowdot-v 3s linear infinite;
+  }
+
+  @keyframes lp-flowdot-v {
+    0%,
+    100% { transform: translateY(-12px); opacity: 0; }
+    20% { opacity: 1; }
+    80% { opacity: 1; }
+  }
+
+  .lp-bento {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
   .lp-card--half { grid-column: span 4; }
   .lp-card--third { grid-column: span 2; }
-  .lp-bento > .lp-card { padding-left: 0; padding-right: 32px; }
-  /* 4 列下 span 混排导致行首不固定，列间线会错位，直接隐藏 */
-  .lp-bento > .lp-card::before { display: none; }
-  .lp-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 28px; }
-  .lp-stat:nth-child(odd) { padding-left: 0; border-left: none; }
-  .lp-doc { grid-template-columns: 44px 120px minmax(0, 1fr) 24px; }
 }
 
-@media (max-width: 720px) {
-  .lp-hero { padding: 24px 18px 0; }
-  .lp-install { flex-wrap: wrap; }
-  .lp-install__prompt { border-right: none; }
-  .lp-install__cmd { white-space: normal; word-break: break-all; }
-  .lp-copy { border-left: none; border-top: 1px solid var(--gold-line); width: 100%; justify-content: center; }
-  .lp-bento { grid-template-columns: minmax(0, 1fr); }
-  .lp-card--half, .lp-card--third { grid-column: span 1; }
-  .lp-card { padding-right: 0; }
-  .lp-card__metrics { gap: 28px; }
-  .lp-section { padding: 72px 18px 0; }
-  .lp-cta { padding: 56px 18px 0; margin-top: 88px; }
-  .lp-stats { grid-template-columns: minmax(0, 1fr); }
-  .lp-stat { padding-left: 0; border-left: none; }
-  .lp-doc {
-    grid-template-columns: minmax(0, 1fr) 24px;
-    gap: 8px 12px;
+@media (max-width: 640px) {
+  .lp-bento {
+    grid-template-columns: minmax(0, 1fr);
   }
-  .lp-doc__idx { grid-column: 1; }
-  .lp-doc__go { grid-column: 2; grid-row: 1; }
-  .lp-doc__label { grid-column: 1 / -1; }
-  .lp-doc__desc { grid-column: 1 / -1; }
+
+  .lp-card--half,
+  .lp-card--third {
+    grid-column: span 1;
+  }
+
+  .lp-card__metrics {
+    gap: 28px;
+  }
+
+  .lp-cta {
+    padding-top: 56px;
+  }
 }
 
 /* 降低动效偏好 */
 @media (prefers-reduced-motion: reduce) {
-  .lp-link::after, .lp-chip__dot, .lp-hud__dot { animation: none; }
+  .lp-link::after {
+    animation: none;
+  }
 }

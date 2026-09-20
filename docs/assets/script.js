@@ -1,6 +1,6 @@
 // Syntax highlighting — only explicit language-tagged code blocks; skip HTML examples and UI regions.
 function shouldSkipBlock(block) {
-  if (block.closest('.hero-actions, .section-index-hero, .hero-section, .hero-banner, .hero-panel, .feature-card__links, .quick-links, .doc-zone')) {
+  if (block.closest('.hero-actions, .hero-action-row, .hero-stage-spatial, .hero-section, .hero-copy, .doc-card, .card-grid, .hero-terminal-pill')) {
     return true;
   }
 
@@ -77,10 +77,9 @@ window.addEventListener('DOMContentLoaded', () => {
   addCopyButtons();
   initTypewriter();
   initThemeToggle();
-  initArchParticles();
 });
 
-// Hero visual — cycle through twelve industrial-AI core effects, one minute each
+// Hero visual — cycle through six industrial-AI core effects, one minute each
 // All effects share a unified fx-viewport (300×300px) to guarantee visual size consistency.
 // Maximum outer radius is clamped to 130px so every scene occupies the same visual mass.
 function initHeroVisual() {
@@ -443,10 +442,10 @@ function initHeroVisual() {
     return '<div class="fx-scene"><div class="fx-viewport">' + innerContent + '</div></div>';
   }
 
-  var effects = [
-    'core', 'lattice', 'radar', 'field', 'beacon',
-    'nexus', 'pulse', 'matrix', 'orbit', 'beam', 'flux', 'swarm'
-  ];
+  // 六套场景（原十二套）：取原清单首尾各三套 ——
+  // 前三套 core/lattice/radar 偏「架构」，后三套 beam/flux/swarm 偏「流动」，
+  // 两半各自成组，60s 一轮交替，视觉密度不重复也不偏科。
+  var effects = ['core', 'lattice', 'radar', 'beam', 'flux', 'swarm'];
   container.innerHTML = effects.map(buildScene).join('');
 
   var scenes = container.querySelectorAll('.fx-scene');
@@ -490,12 +489,11 @@ function initThemeToggle() {
   var storageKey = 'edgeCore-docs-theme';
   var root = document.documentElement;
   var button = document.querySelector('[data-theme-toggle]');
-  var label = document.querySelector('[data-theme-label]');
 
   function syncTheme(theme) {
     root.setAttribute('data-theme', theme);
-    if (label) label.textContent = theme === 'light' ? '暗色' : '明亮';
-    if (button) button.setAttribute('aria-pressed', String(theme === 'light'));
+    // 亮/暗图标由 CSS 依据 data-theme 切换，此处只维护无障碍状态
+    if (button) button.setAttribute('aria-pressed', String(theme === 'dark'));
   }
 
   var current = root.getAttribute('data-theme') || 'light';
@@ -518,7 +516,8 @@ function initTypewriter() {
   if (!tw) return;
 
   var lines = [
-    '13 种工业协议统一接入',
+    // 「13 种工业协议统一接入」已固定写在首屏副标题（.hero-subhead-mono）上，
+    // 此处不再重复，避免副标题与打字机同时出现同一句话
     'ShadowCore 内存影子真源',
     'ScanEngine 10ms 级调度内核',
     '工业级 SLA · lag P95 <100ms',
@@ -544,255 +543,4 @@ function initTypewriter() {
     setTimeout(tick, deleting ? 50 : 120);
   }
   tick();
-}
-
-// Architecture flow — industrial data-packet transmission between nodes
-// Glowing circuit traces, directional arrows, pulsing node halos and discrete
-// rectangular data blocks for a factory-console / Wireshark-style pipeline.
-function initArchParticles() {
-  var flow = document.querySelector('[data-arch-flow]');
-  var canvas = document.querySelector('[data-arch-canvas]');
-  if (!flow || !canvas) return;
-
-  var ctx = canvas.getContext('2d');
-  var packets = [];
-  var nodePulse = [];          // per-node pulse phase [0..1]
-  var PACKET_COUNT = 24;       // discrete data blocks in flight
-  var PACKET_SPEED = 0.0065;   // segment fraction per frame
-  var running = true;
-
-  /* ---- helpers ---- */
-  function getWaypoints() {
-    var steps = flow.querySelectorAll('.arch-step');
-    var fr = flow.getBoundingClientRect();
-    var pts = [];
-    for (var i = 0; i < steps.length; i++) {
-      var r = steps[i].getBoundingClientRect();
-      pts.push({
-        x: r.left - fr.left + r.width / 2,
-        y: r.top - fr.top + r.height / 2
-      });
-    }
-    return pts;
-  }
-
-  function lerp(a, b, t) { return a + (b - a) * t; }
-  function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
-
-  /* ---- canvas sizing (HiDPI) ---- */
-  function resize() {
-    var rect = flow.getBoundingClientRect();
-    var dpr = window.devicePixelRatio || 1;
-    canvas.width = rect.width * dpr;
-    canvas.height = rect.height * dpr;
-    canvas.style.width = rect.width + 'px';
-    canvas.style.height = rect.height + 'px';
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.scale(dpr, dpr);
-  }
-
-  /* ---- spawn packets evenly distributed across all segments ---- */
-  function spawnPackets(waypoints) {
-    var pkts = [];
-    var segs = waypoints.length - 1;
-    if (segs <= 0) return pkts;
-    var perSeg = Math.floor(PACKET_COUNT / segs);
-    var extra = PACKET_COUNT - perSeg * segs;
-    for (var s = 0; s < segs; s++) {
-      var n = perSeg + (s < extra ? 1 : 0);
-      for (var j = 0; j < n; j++) {
-        pkts.push({
-          seg: s,
-          t: (j + 0.5) / n,
-          size: 2.2 + Math.random() * 1.8,
-          alpha: 0.65 + Math.random() * 0.35
-        });
-      }
-    }
-    return pkts;
-  }
-
-  /* ---- init ---- */
-  var waypoints = getWaypoints();
-  packets = spawnPackets(waypoints);
-  nodePulse = waypoints.map(function () { return Math.random(); });
-
-  /* ---- draw frame ---- */
-  function draw() {
-    if (!running) return;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    waypoints = getWaypoints();
-    if (waypoints.length < 2) { requestAnimationFrame(draw); return; }
-    if (nodePulse.length !== waypoints.length) {
-      nodePulse = waypoints.map(function () { return Math.random(); });
-    }
-
-    // ── Layer 1: glowing circuit traces with arrows ──
-    for (var si = 0; si < waypoints.length - 1; si++) {
-      var a = waypoints[si];
-      var b = waypoints[si + 1];
-      var dx = b.x - a.x;
-      var dy = b.y - a.y;
-      var len = Math.sqrt(dx * dx + dy * dy) || 1;
-      var ux = dx / len;
-      var uy = dy / len;
-
-      // Base dim trace
-      ctx.strokeStyle = 'rgba(200,167,91,0.10)';
-      ctx.lineWidth = 1;
-      ctx.lineCap = 'round';
-      ctx.beginPath();
-      ctx.moveTo(a.x, a.y);
-      ctx.lineTo(b.x, b.y);
-      ctx.stroke();
-
-      // Inner bright core line
-      ctx.strokeStyle = 'rgba(200,167,91,0.22)';
-      ctx.lineWidth = 0.6;
-      ctx.beginPath();
-      ctx.moveTo(a.x, a.y);
-      ctx.lineTo(b.x, b.y);
-      ctx.stroke();
-
-      // Direction arrow at mid-point
-      var midT = 0.5;
-      var mx = lerp(a.x, b.x, midT);
-      var my = lerp(a.y, b.y, midT);
-      var as = 4;
-      ctx.fillStyle = 'rgba(200,167,91,0.35)';
-      ctx.beginPath();
-      ctx.moveTo(mx + ux * as, my + uy * as);
-      ctx.lineTo(mx - ux * as + uy * as * 0.8, my - uy * as - ux * as * 0.8);
-      ctx.lineTo(mx - ux * as - uy * as * 0.8, my - uy * as + ux * as * 0.8);
-      ctx.closePath();
-      ctx.fill();
-    }
-
-    // ── Layer 2: pulsing node halos ──
-    for (var wi = 0; wi < waypoints.length; wi++) {
-      var wp = waypoints[wi];
-      nodePulse[wi] += 0.012;
-      if (nodePulse[wi] > 1) nodePulse[wi] = 0;
-      var phase = nodePulse[wi];
-      var pr = 8 + phase * 14;
-      var pa = 0.28 * (1 - phase);
-
-      var halo = ctx.createRadialGradient(wp.x, wp.y, 0, wp.x, wp.y, pr);
-      halo.addColorStop(0, 'rgba(200,167,91,' + (pa * 0.5).toFixed(3) + ')');
-      halo.addColorStop(0.6, 'rgba(200,167,91,' + (pa * 0.2).toFixed(3) + ')');
-      halo.addColorStop(1, 'rgba(200,167,91,0)');
-      ctx.fillStyle = halo;
-      ctx.beginPath();
-      ctx.arc(wp.x, wp.y, pr, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Node core
-      ctx.fillStyle = 'rgba(200,167,91,0.55)';
-      ctx.beginPath();
-      ctx.arc(wp.x, wp.y, 2.2, 0, Math.PI * 2);
-      ctx.fill();
-    }
-
-    // ── Layer 3: animated data packets ──
-    for (var i = 0; i < packets.length; i++) {
-      var p = packets[i];
-
-      p.t += PACKET_SPEED;
-      if (p.t >= 1) {
-        // Arrival radial flash at the receiving node
-        var bNode = waypoints[p.seg + 1];
-        var flashR = 16;
-        var flash = ctx.createRadialGradient(bNode.x, bNode.y, 0, bNode.x, bNode.y, flashR);
-        flash.addColorStop(0, 'rgba(232,213,163,0.45)');
-        flash.addColorStop(0.4, 'rgba(200,167,91,0.18)');
-        flash.addColorStop(1, 'rgba(200,167,91,0)');
-        ctx.fillStyle = flash;
-        ctx.beginPath();
-        ctx.arc(bNode.x, bNode.y, flashR, 0, Math.PI * 2);
-        ctx.fill();
-
-        p.seg = (p.seg + 1) % (waypoints.length - 1);
-        p.t = 0;
-      }
-
-      var a = waypoints[p.seg];
-      var b = waypoints[p.seg + 1];
-      var cx = lerp(a.x, b.x, p.t);
-      var cy = lerp(a.y, b.y, p.t);
-
-      var bw = p.size * 3.0;
-      var bh = p.size * 1.35;
-      var rx = cx - bw / 2;
-      var ry = cy - bh / 2;
-      var rr = 1.5;
-
-      // Outer envelope glow
-      var envGlow = ctx.createRadialGradient(cx, cy, 0, cx, cy, p.size * 3);
-      envGlow.addColorStop(0, 'rgba(232,213,163,' + (p.alpha * 0.5).toFixed(2) + ')');
-      envGlow.addColorStop(0.5, 'rgba(200,167,91,' + (p.alpha * 0.18).toFixed(2) + ')');
-      envGlow.addColorStop(1, 'rgba(200,167,91,0)');
-      ctx.fillStyle = envGlow;
-      ctx.fillRect(cx - p.size * 3, cy - p.size * 3, p.size * 6, p.size * 6);
-
-      // Data block body (rounded rect)
-      ctx.fillStyle = 'rgba(200,167,91,' + (p.alpha * 0.92).toFixed(2) + ')';
-      ctx.beginPath();
-      ctx.moveTo(rx + rr, ry);
-      ctx.lineTo(rx + bw - rr, ry);
-      ctx.arcTo(rx + bw, ry, rx + bw, ry + rr, rr);
-      ctx.lineTo(rx + bw, ry + bh - rr);
-      ctx.arcTo(rx + bw, ry + bh, rx + bw - rr, ry + bh, rr);
-      ctx.lineTo(rx + rr, ry + bh);
-      ctx.arcTo(rx, ry + bh, rx, ry + bh - rr, rr);
-      ctx.lineTo(rx, ry + rr);
-      ctx.arcTo(rx, ry, rx + rr, ry, rr);
-      ctx.closePath();
-      ctx.fill();
-
-      // Bright core stripe
-      ctx.fillStyle = 'rgba(255,242,210,' + (p.alpha * 0.98).toFixed(2) + ')';
-      ctx.fillRect(rx + 1.5, cy - 0.6, bw - 3, 1.2);
-
-      // Discrete trailing echoes
-      var echoCount = 3;
-      var echoSpacing = 0.05;
-      for (var e = 1; e <= echoCount; e++) {
-        var et = Math.max(0, p.t - echoSpacing * e);
-        if (et <= 0) continue;
-        var ex = lerp(a.x, b.x, et);
-        var ey = lerp(a.y, b.y, et);
-        var ea = p.alpha * (1 - e / (echoCount + 1)) * 0.32;
-        var es = p.size * (1 - e * 0.2);
-        ctx.fillStyle = 'rgba(200,167,91,' + ea.toFixed(2) + ')';
-        ctx.fillRect(ex - es * 1.15, ey - es * 0.45, es * 2.3, es * 0.9);
-      }
-    }
-
-    requestAnimationFrame(draw);
-  }
-
-  resize();
-  draw();
-
-  /* ---- resize debounce ---- */
-  var resizeTimer;
-  window.addEventListener('resize', function () {
-    clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(function () {
-      resize();
-      waypoints = getWaypoints();
-      packets = spawnPackets(waypoints);
-      nodePulse = waypoints.map(function () { return Math.random(); });
-    }, 200);
-  });
-
-  /* ---- theme change → respawn all packets ---- */
-  var observer = new MutationObserver(function () {
-    resize();
-    waypoints = getWaypoints();
-    packets = spawnPackets(waypoints);
-    nodePulse = waypoints.map(function () { return Math.random(); });
-  });
-  observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 }

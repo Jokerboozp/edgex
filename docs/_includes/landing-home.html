@@ -1,81 +1,91 @@
 <!-- ============================================================
-     Hero — Editorial / 纯色沉浸
-     结构：状态带（左标签 + 右 HUD） + 大标题 + 终端安装命令 + 指标带
-     设计约束：无框、无全屏网格、无渐变、无装饰性动效
-     JS 契约：保留 [data-hero-visual]（粒子）与 .hero-typewriter（打字机）
+     首屏 —— 空间舞台（Spatial Stage）
+     ------------------------------------------------------------
+     两层空间关系，取代"主视觉掉在文案下方"的单列堆叠：
+
+       底层 Z:1  .hero-spatial-artwork —— 绝对定位（right:-2% / 垂直居中）、
+                                        放大、半透 0.85、径向羽化的精密微架构
+                                        拓扑，充当工业水印背景，pointer-events:none；
+       顶层 Z:10 .hero-stage-content   —— 徽章 / 主标题 / 终端条 / 胶囊按钮，
+                                        限宽 660px，不给背景留挤压空间。
+
+     首屏正下方紧接 .hero-metric-strip 四大指标，自然承接「端到端数据流向」。
+
+     JS 契约（勿改名）：
+       .hero-typewriter > .typewriter-text / .typewriter-cursor
+       [data-copy] → [data-copy-label]     —— 复制安装命令
      ============================================================ -->
-<section class="lp-hero">
-  <div class="lp-hero__ribbon">
-    <span class="lp-chip">
-      <span class="lp-chip__dot" aria-hidden="true"></span>
-      EdgeOS 工业边缘计算核心运行时
-    </span>
+<section class="hero-stage-spatial">
+  <div class="hero-stage-inner">
+    <!-- 顶层：文字与操作 -->
+    <div class="hero-stage-content">
+      <div class="hero-badge-pill">
+        <span class="live-dot" aria-hidden="true"></span>
+        <span class="badge-text">EDGEOS 工业边缘计算核心运行时</span>
+        <span class="badge-split" aria-hidden="true">/</span>
+        <span class="badge-sub">13 驱动 · 5 北向 · MCP READY</span>
+      </div>
 
-    <div class="lp-hud" aria-hidden="true">
-      <div class="lp-hud__row"><span class="lp-hud__dot"></span><span class="lp-hud__val lp-hud__val--ok">ONLINE</span></div>
-      <div class="lp-hud__row"><span class="lp-hud__label">TICK</span><span class="lp-hud__val">10ms</span></div>
-      <div class="lp-hud__row"><span class="lp-hud__label">MCP</span><span class="lp-hud__val">READY</span></div>
-      <div class="lp-hud__row"><span class="lp-hud__label">SB/NB</span><span class="lp-hud__val">13/5</span></div>
-    </div>
-  </div>
+      <h1 class="hero-title-main">打通 OT 与 IT 的<span class="text-gold-accent">工业边缘计算网关</span></h1>
 
-  <div class="lp-hero__inner">
-    <div class="lp-hero__copy">
-      <h1 class="lp-hero__title">打通 OT 与 IT 的<em>工业边缘计算网关</em></h1>
-
-      <p class="lp-hero__sub">edgeCore · 轻量级工业边缘计算网关</p>
+      <div class="hero-subhead-mono">edgeCore · 轻量级工业边缘计算网关 | 13 种工业协议统一接入</div>
 
       <div class="hero-typewriter">
         <span class="typewriter-cursor">|</span>
         <span class="typewriter-text"></span>
       </div>
 
-      <p class="lp-hero__desc">
-        面向制造、能源与楼宇现场：南向统一接入 13 种工业协议，边缘就地处理，北向灵活对接云端与 SCADA，一机完成从采集到上报的完整闭环。原生支持 MCP 协议对接 LLM，内置工业级 SLA 保障长期可靠运行。
-      </p>
+      <p class="hero-desc-lead">面向制造、能源与楼宇现场：南向统一接入 13 种工业协议，边缘就地处理，北向灵活对接云端与 SCADA，一机完成从采集到上报的完整闭环。原生支持 MCP 协议对接 LLM，内置工业级 SLA 保障长期可靠运行。</p>
 
-      <div class="lp-install">
-        <span class="lp-install__prompt" aria-hidden="true">$</span>
-        <code class="lp-install__cmd" id="lp-install-cmd">git clone https://github.com/anviod/edgeCore.git</code>
-        <button class="lp-copy" type="button" data-copy="#lp-install-cmd" aria-label="复制安装命令">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <rect x="9" y="9" width="13" height="13" rx="2"></rect>
-            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-          </svg>
+      <div class="hero-terminal-pill">
+        <div class="term-text">
+          <span class="term-prompt" aria-hidden="true">$</span>
+          <code id="lp-install-cmd">git clone https://github.com/anviod/edgeCore.git</code>
+        </div>
+        <button class="term-copy-btn" type="button" data-copy="#lp-install-cmd" aria-label="复制安装命令">
           <span data-copy-label>复制</span>
         </button>
       </div>
 
-      <div class="lp-actions">
-        <a class="lp-btn lp-btn--primary" href="guide/USER_MANUAL.html">
-          <span>快速开始</span><span class="lp-btn__arrow">→</span>
+      <div class="hero-action-row">
+        <a class="pill-btn pill-btn-primary" href="guide/USER_MANUAL.html">
+          <span>快速开始</span><span class="pill-btn__arrow">→</span>
         </a>
-        <a class="lp-btn lp-btn--ghost" href="architecture/index.html">架构设计</a>
-        <a class="lp-btn lp-btn--ghost" href="drivers/index.html">驱动矩阵</a>
-        <a class="lp-btn lp-btn--ghost" href="https://github.com/anviod/edgeCore" target="_blank" rel="noopener noreferrer">GitHub</a>
+        <a class="pill-btn pill-btn-secondary" href="architecture/index.html">架构设计</a>
+        <a class="pill-btn pill-btn-secondary" href="drivers/index.html">驱动矩阵</a>
+        <a class="pill-btn pill-btn-secondary" href="https://github.com/anviod/edgeCore" target="_blank" rel="noopener noreferrer">GitHub</a>
       </div>
     </div>
 
-    <div class="hero-visual lp-hero__visual" aria-hidden="true" data-hero-visual data-fx-count="12"></div>
+    <!-- 底层：粒子内核背景 —— 沿用原 Hero 配图方案（fx-* 子系统，DOM 由 script.js 生成）
+         绝对定位 + 半透 + 径向羽化，作为首屏右侧的空间配图；
+         外层 pointer-events:none，内层 .hero-visual 恢复 auto 以保留"双击换场景"。 -->
+    <div class="hero-spatial-artwork" aria-hidden="true">
+      <div class="hero-visual" data-hero-visual data-fx-count="6"></div>
+    </div>
   </div>
+</section>
 
-  <div class="lp-stats">
-    <div class="lp-stat">
-      <div class="lp-stat__value">13</div>
-      <div class="lp-stat__label">工业协议驱动 · 南向统一接入</div>
-    </div>
-    <div class="lp-stat">
-      <div class="lp-stat__value">10<em>ms</em></div>
-      <div class="lp-stat__label">调度内核 Tick · EDF 优先级</div>
-    </div>
-    <div class="lp-stat">
-      <div class="lp-stat__value">&lt;150<em>ms</em></div>
-      <div class="lp-stat__label">调度 lag P99 · ≤10k 点位</div>
-    </div>
-    <div class="lp-stat">
-      <div class="lp-stat__value">128<em>MB</em></div>
-      <div class="lp-stat__label">最低内存 · 单二进制静态编译</div>
-    </div>
+
+<!-- ============================================================
+     首屏指标带 —— 紧贴 Hero 正下方，四张微晶读数铭牌
+     ============================================================ -->
+<section class="hero-metric-strip">
+  <div class="metric-cell">
+    <span class="metric-value">13</span>
+    <span class="metric-label">工业协议驱动 · 南向统一接入</span>
+  </div>
+  <div class="metric-cell">
+    <span class="metric-value">10<em>ms</em></span>
+    <span class="metric-label">调度内核 Tick · EDF 优先级</span>
+  </div>
+  <div class="metric-cell">
+    <span class="metric-value">&lt;150<em>ms</em></span>
+    <span class="metric-label">调度 lag P99 · ≤10k 点位</span>
+  </div>
+  <div class="metric-cell">
+    <span class="metric-value">128<em>MB</em></span>
+    <span class="metric-label">最低内存 · 单二进制静态编译</span>
   </div>
 </section>
 
@@ -83,13 +93,13 @@
 <!-- ============================================================
      数据流向总览
      ============================================================ -->
-<section class="lp-section" id="architecture">
-  <div class="lp-section__head">
-    <span class="lp-kicker">Data Flow</span>
-    <h2 class="lp-section__title">端到端数据流向</h2>
-    <p class="lp-section__body">
-      从异构的工业现场设备，到规范化的云端平台与大模型交互——单进程内完成采集、调度、计算与转发。
-    </p>
+<section class="landing-section" id="architecture">
+  <div class="section-heading">
+    <div>
+      <span class="section-heading__eyebrow">Data Flow</span>
+      <h2>端到端数据流向</h2>
+    </div>
+    <p class="section-heading__note">从异构的工业现场设备，到规范化的云端平台与大模型交互——单进程内完成采集、调度、计算与转发。</p>
   </div>
 
   <div class="lp-flow">
@@ -170,11 +180,13 @@
 <!-- ============================================================
      核心能力 — 模块登记
      ============================================================ -->
-<section class="lp-section" id="features">
-  <div class="lp-section__head">
-    <span class="lp-kicker">Why edgeCore</span>
-    <h2 class="lp-section__title">为严苛工业现场打造</h2>
-    <p class="lp-section__body">从调度内核到状态模型，每一层都围绕长期稳定运行设计。</p>
+<section class="landing-section" id="features">
+  <div class="section-heading">
+    <div>
+      <span class="section-heading__eyebrow">Why edgeCore</span>
+      <h2>为严苛工业现场打造</h2>
+    </div>
+    <p class="section-heading__note">从调度内核到状态模型，每一层都围绕长期稳定运行设计。</p>
   </div>
 
   <div class="lp-bento">
@@ -191,9 +203,7 @@
         </svg>
       </div>
       <h3 class="lp-card__title">MCP 协议对接 LLM</h3>
-      <p class="lp-card__desc">
-        支持 Model Context Protocol，让大语言模型能够安全、实时地读取设备状态、查询点位与诊断故障，开启 AI 工业运维新体验——无需把现场数据搬到云端。
-      </p>
+      <p class="lp-card__desc">支持 Model Context Protocol，让大语言模型能够安全、实时地读取设备状态、查询点位与诊断故障，开启 AI 工业运维新体验——无需把现场数据搬到云端。</p>
       <div class="lp-card__foot">AI-Native Industrial Gateway</div>
     </article>
 
@@ -210,10 +220,7 @@
         </svg>
       </div>
       <h3 class="lp-card__title">工业级 SLA 保障</h3>
-      <p class="lp-card__desc">
-        内置指标门控、Soak 长稳回归与 CI 五道 gate；1 万点位压测稳定无内存泄漏。
-        ConnectionManager 提供统一连接状态机、指数退避重连与冷却期策略。
-      </p>
+      <p class="lp-card__desc">内置指标门控、Soak 长稳回归与 CI 五道 gate；1 万点位压测稳定无内存泄漏。ConnectionManager 提供统一连接状态机、指数退避重连与冷却期策略。</p>
       <div class="lp-card__metrics">
         <div class="lp-card__metric"><span>10k</span><small>点位压测规模</small></div>
         <div class="lp-card__metric"><span>5</span><small>CI 质量 gate</small></div>
@@ -233,9 +240,7 @@
         </svg>
       </div>
       <h3 class="lp-card__title">ScanEngine 调度内核</h3>
-      <p class="lp-card__desc">
-        10ms Tick 驱动优先级队列，EDF 最早截止优先与 hard jitter clamp，自适应节流与设备级熔断隔离。
-      </p>
+      <p class="lp-card__desc">10ms Tick 驱动优先级队列，EDF 最早截止优先与 hard jitter clamp，自适应节流与设备级熔断隔离。</p>
       <div class="lp-card__foot">P99 &lt;150ms · ≤10k tag</div>
     </article>
 
@@ -253,9 +258,7 @@
         </svg>
       </div>
       <h3 class="lp-card__title">ShadowCore 影子真源</h3>
-      <p class="lp-card__desc">
-        点位值的内存事实来源：写时复制快照、环形缓冲写入、分钟级持久化。UI、边缘计算与北向接口统一从影子读取。
-      </p>
+      <p class="lp-card__desc">点位值的内存事实来源：写时复制快照、环形缓冲写入、分钟级持久化。UI、边缘计算与北向接口统一从影子读取。</p>
       <div class="lp-card__foot">Single Source of Truth</div>
     </article>
 
@@ -275,9 +278,7 @@
         </svg>
       </div>
       <h3 class="lp-card__title">虚拟影子与规则引擎</h3>
-      <p class="lp-card__desc">
-        跨通道引用计算点与聚合点，公式依赖图 + 表达式求值 + 批量动作，本地执行联动控制，无需云端往返。
-      </p>
+      <p class="lp-card__desc">跨通道引用计算点与聚合点，公式依赖图 + 表达式求值 + 批量动作，本地执行联动控制，无需云端往返。</p>
       <div class="lp-card__foot">Virtualization &amp; Rule Engine</div>
     </article>
 
@@ -295,9 +296,7 @@
         </svg>
       </div>
       <h3 class="lp-card__title">轻量部署，单二进制交付</h3>
-      <p class="lp-card__desc">
-        <code>CGO_ENABLED=0</code> 静态编译，无运行时依赖、无需容器。最低 128MB 内存与 1GB 存储即可运行，支持 x86_64、ARMv7、ARM64，裸机或 systemd 直接部署。
-      </p>
+      <p class="lp-card__desc"><code>CGO_ENABLED=0</code> 静态编译，无运行时依赖、无需容器。最低 128MB 内存与 1GB 存储即可运行，支持 x86_64、ARMv7、ARM64，裸机或 systemd 直接部署。</p>
       <div class="lp-card__metrics">
         <div class="lp-card__metric"><span>128MB</span><small>最低内存</small></div>
         <div class="lp-card__metric"><span>3</span><small>CPU 架构</small></div>
@@ -319,9 +318,7 @@
         </svg>
       </div>
       <h3 class="lp-card__title">全栈工业协议矩阵</h3>
-      <p class="lp-card__desc">
-        13 个南向适配器覆盖电力、楼宇、离散制造与流程工业；公共 ConnectionManager 统一连接生命周期管理。
-      </p>
+      <p class="lp-card__desc">13 个南向适配器覆盖电力、楼宇、离散制造与流程工业；公共 ConnectionManager 统一连接生命周期管理。</p>
       <div class="lp-card__foot"><a href="drivers/index.html">查看驱动矩阵 →</a></div>
     </article>
   </div>
@@ -331,13 +328,13 @@
 <!-- ============================================================
      协议清单
      ============================================================ -->
-<section class="lp-section" id="protocols">
-  <div class="lp-section__head">
-    <span class="lp-kicker">Southbound Drivers</span>
-    <h2 class="lp-section__title">13 种工业协议，开箱即用</h2>
-    <p class="lp-section__body">
-      注册来源 <code>cmd/main.go</code> 空白导入，全部驱动均提供读写能力与健康检测。完整支持矩阵见<a href="drivers/index.html">驱动文档</a>。
-    </p>
+<section class="landing-section" id="protocols">
+  <div class="section-heading">
+    <div>
+      <span class="section-heading__eyebrow">Southbound Drivers</span>
+      <h2>13 种工业协议，开箱即用</h2>
+    </div>
+    <p class="section-heading__note">注册来源 <code>cmd/main.go</code> 空白导入，全部驱动均提供读写能力与健康检测。完整支持矩阵见<a href="drivers/index.html">驱动文档</a>。</p>
   </div>
 
   <div class="lp-proto">
@@ -364,37 +361,35 @@
 <!-- ============================================================
      文档导航
      ============================================================ -->
-<section class="lp-section" id="docs">
-  <div class="lp-section__head">
-    <span class="lp-kicker">Documentation</span>
-    <h2 class="lp-section__title">文档导航</h2>
-    <p class="lp-section__body">按主题直达手册、架构、驱动与 AI 扩展能力文档。</p>
+<section class="landing-section" id="docs">
+  <div class="section-heading">
+    <div>
+      <span class="section-heading__eyebrow">Documentation</span>
+      <h2>文档导航</h2>
+    </div>
+    <p class="section-heading__note">按主题直达手册、架构、驱动与 AI 扩展能力文档。</p>
   </div>
 
-  <div class="lp-docs">
-    <a class="lp-doc" href="guide/产品说明.html">
-      <span class="lp-doc__idx">01</span>
-      <span class="lp-doc__label">产品</span>
-      <span class="lp-doc__desc">产品说明 · SLA 指标 · 场景总览</span>
-      <span class="lp-doc__go">→</span>
+  <div class="card-grid">
+    <a class="doc-card" href="guide/产品说明.html">
+      <span class="doc-card__code">01 / 产品</span>
+      <h3>产品说明</h3>
+      <p>产品定位、工业级 SLA 指标与场景总览。</p>
     </a>
-    <a class="lp-doc" href="architecture/index.html">
-      <span class="lp-doc__idx">02</span>
-      <span class="lp-doc__label">架构</span>
-      <span class="lp-doc__desc">ScanEngine · ShadowCore · 系统架构</span>
-      <span class="lp-doc__go">→</span>
+    <a class="doc-card" href="architecture/index.html">
+      <span class="doc-card__code">02 / 架构</span>
+      <h3>架构设计</h3>
+      <p>ScanEngine 调度内核、ShadowCore 状态模型与系统分层。</p>
     </a>
-    <a class="lp-doc" href="guide/mcp-access-guide.html">
-      <span class="lp-doc__idx">03</span>
-      <span class="lp-doc__label">扩展</span>
-      <span class="lp-doc__desc">MCP 接入 · 工具清单 · 客户端配置</span>
-      <span class="lp-doc__go">→</span>
+    <a class="doc-card" href="guide/mcp-access-guide.html">
+      <span class="doc-card__code">03 / 扩展</span>
+      <h3>MCP 接入</h3>
+      <p>MCP 工具清单、客户端配置与 AI 运维实践。</p>
     </a>
-    <a class="lp-doc" href="guide/USER_MANUAL.html">
-      <span class="lp-doc__idx">04</span>
-      <span class="lp-doc__label">手册</span>
-      <span class="lp-doc__desc">安装部署 · 协议配置 · 最佳实践</span>
-      <span class="lp-doc__go">→</span>
+    <a class="doc-card" href="guide/USER_MANUAL.html">
+      <span class="doc-card__code">04 / 手册</span>
+      <h3>用户手册</h3>
+      <p>安装部署、协议配置与最佳实践。</p>
     </a>
   </div>
 </section>
@@ -405,14 +400,12 @@
      ============================================================ -->
 <section class="lp-cta">
   <h2 class="lp-cta__title">准备好构建现代工业物联网了吗？</h2>
-  <p class="lp-cta__desc">
-    访问 GitHub 仓库查看源码与文档、提交 Issue，或为项目点一颗 Star 支持开源共建。
-  </p>
-  <div class="lp-actions">
-    <a class="lp-btn lp-btn--primary" href="https://github.com/anviod/edgeCore" target="_blank" rel="noopener noreferrer">
-      <span>前往 GitHub 仓库</span><span class="lp-btn__arrow">→</span>
+  <p class="lp-cta__desc">访问 GitHub 仓库查看源码与文档、提交 Issue，或为项目点一颗 Star 支持开源共建。</p>
+  <div class="hero-actions">
+    <a class="pill-btn pill-btn-primary" href="https://github.com/anviod/edgeCore" target="_blank" rel="noopener noreferrer">
+      <span>前往 GitHub 仓库</span><span class="pill-btn__arrow">→</span>
     </a>
-    <a class="lp-btn lp-btn--ghost" href="guide/USER_MANUAL.html">阅读用户手册</a>
+    <a class="pill-btn pill-btn-secondary" href="guide/USER_MANUAL.html">阅读用户手册</a>
   </div>
 </section>
 
